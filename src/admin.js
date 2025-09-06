@@ -372,5 +372,8 @@ function showAdminLogin() {
     }
 }
 
+// Make showAdminLogin globally available
+window.showAdminLogin = showAdminLogin;
+
 // Global admin panel instance
 window.adminPanel = new AdminPanel();

@@ -1,0 +1,129 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booth Slot Machine</title>
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <!-- Prize Showcase -->
+    <div class="prize-showcase">
+        <h2>Available Prizes</h2>
+        <div id="prizeList" class="prize-list"></div>
+    </div>
+
+    <!-- Slot Machine Container -->
+    <div class="slot-container">
+        <div class="winning-arrow">
+            <div class="arrow-pointer">→</div>
+        </div>
+        
+        <div class="slot-machine">
+            <div class="winning-box hidden" id="winningBox"></div>
+            <div class="reel" id="reel1">
+                <div class="reel-strip"></div>
+            </div>
+            <div class="reel" id="reel2">
+                <div class="reel-strip"></div>
+            </div>
+            <div class="reel" id="reel3">
+                <div class="reel-strip"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <button id="toggleWinningBox" class="toggle-button">
+            <span id="toggleText">Show Winning Box</span>
+        </button>
+        <button id="spinButton" class="spin-button">
+            <span class="button-text">SPIN!</span>
+            <div class="button-glow"></div>
+        </button>
+        <div class="game-info">
+            <p id="modeDisplay">Mode: Probability</p>
+            <p id="remainingSpins"></p>
+        </div>
+    </div>
+
+    <!-- Prize Won Popup -->
+    <div id="prizePopup" class="prize-popup hidden">
+        <div class="popup-content">
+            <div class="prize-shield">🏆</div>
+            <h2 id="prizePopupTitle">Congratulations!</h2>
+            <div class="won-prize">
+                <img id="wonPrizeImage" src="" alt="Prize">
+                <h3 id="wonPrizeName"></h3>
+            </div>
+            <button id="closePopup" class="close-button">Continue</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <div class="admin-content">
+            <div class="admin-header">
+                <h2>Admin Panel</h2>
+                <button id="closeAdmin" class="close-admin">×</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="tab-button active" data-tab="prizes">Prizes</button>
+                <button class="tab-button" data-tab="settings">Settings</button>
+                <button class="tab-button" data-tab="logs">Logs</button>
+            </div>
+
+            <div id="prizesTab" class="tab-content active">
+                <div class="prizes-section">
+                    <button id="addPrize" class="add-prize-btn">Add New Prize</button>
+                    <div id="prizeEditor" class="prize-editor hidden">
+                        <h3 id="editorTitle">Add New Prize</h3>
+                        <input type="text" id="prizeName" placeholder="Prize Name">
+                        <input type="url" id="prizeImage" placeholder="Image URL">
+                        <input type="number" id="prizeQuantity" placeholder="Quantity" min="0">
+                        <input type="number" id="prizeChance" placeholder="Win Chance %" min="0" max="100" step="0.1">
+                        <div class="editor-buttons">
+                            <button id="savePrize" class="save-btn">Save</button>
+                            <button id="cancelEdit" class="cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                    <div id="prizesList" class="prizes-list"></div>
+                </div>
+            </div>
+
+            <div id="settingsTab" class="tab-content">
+                <div class="settings-section">
+                    <h3>Game Mode</h3>
+                    <label class="radio-label">
+                        <input type="radio" name="gameMode" value="probability" checked>
+                        <span>Probability Mode</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="gameMode" value="duration">
+                        <span>Duration Mode (All prizes must be won)</span>
+                    </label>
+                    <button id="resetGame" class="reset-btn">Reset Game & Clear Logs</button>
+                </div>
+            </div>
+
+            <div id="logsTab" class="tab-content">
+                <div class="logs-section">
+                    <h3>Spin Logs</h3>
+                    <div id="spinLogs" class="logs-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Access Button (Hidden) -->
+    <div class="admin-trigger" ondblclick="showAdminLogin()"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="src/storage.js"></script>
+    <script src="src/animations.js"></script>
+    <script src="src/admin.js"></script>
+    <script src="src/app.js"></script>
+</body>
+</html>

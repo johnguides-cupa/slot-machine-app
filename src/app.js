@@ -7,25 +7,33 @@ class SlotMachine {
 
     initialize() {
         this.updatePrizeDisplay();
-        this.updateGameInfo();
+        //this.updateGameInfo();
         this.populateReels();
         this.initializeAnimations();
+        
+        // Start background ambience after a short delay
+        setTimeout(() => {
+            if (window.soundManager) {
+                window.soundManager.onBackgroundStart();
+            }
+        }, 2000);
     }
 
     setupEventListeners() {
         // Spin button
         document.getElementById('spinButton').addEventListener('click', () => {
+            if (window.soundManager) {
+                window.soundManager.onButtonClick();
+            }
             this.spin();
         });
 
         // Close prize popup
         document.getElementById('closePopup').addEventListener('click', () => {
+            if (window.soundManager) {
+                window.soundManager.onButtonClick();
+            }
             animationManager.closePrizePopup();
-        });
-
-        // Toggle winning box visibility
-        document.getElementById('toggleWinningBox').addEventListener('click', () => {
-            this.toggleWinningBox();
         });
 
         // Keyboard shortcuts
@@ -59,21 +67,11 @@ class SlotMachine {
         }, 100);
     }
 
-    updateGameInfo() {
-        const gameMode = storageManager.getGameMode();
-        const modeDisplay = document.getElementById('modeDisplay');
-        const remainingSpins = document.getElementById('remainingSpins');
-        
-        modeDisplay.textContent = `Mode: ${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
-        
-        if (gameMode === 'duration') {
-            const deck = storageManager.getDeck();
-            remainingSpins.textContent = `Prizes remaining: ${deck.length}`;
-            remainingSpins.style.display = 'block';
-        } else {
-            remainingSpins.style.display = 'none';
-        }
-    }
+    // updateGameInfo() {
+    //     // Simple display for probability mode
+    //     const modeDisplay = document.getElementById('modeDisplay');
+    //     modeDisplay.textContent = 'Probability Mode';
+    // }
 
     populateReels() {
         const prizes = storageManager.getPrizes();
@@ -144,39 +142,18 @@ class SlotMachine {
         this.logSpin(actualPrize);
 
         // Update game info
-        this.updateGameInfo();
+        //this.updateGameInfo();
 
     // Start the spin animation with slotIcons, show actualPrize in popup
     animationManager.spinReels(actualPrize, prizes, slotIcons);
     }
 
     determineWinningPrize(prizes) {
-        const gameMode = storageManager.getGameMode();
-        
-        if (gameMode === 'duration') {
-            return this.selectPrizeFromDeck(prizes);
-        } else {
-            return this.selectPrizeByProbability(prizes);
-        }
-    }
-
-    selectPrizeFromDeck(prizes) {
-        const deck = storageManager.getDeck();
-        
-        // Generate new deck if empty
-        if (deck.length === 0) {
-            const newDeck = storageManager.generateDeck();
-            if (newDeck.length === 0) {
-                return null; // No prizes with quantity > 0
-            }
-        }
-
-        const winningStagePrizeId = storageManager.drawFromDeck();
-        return prizes.find(p => p.id === winningStagePrizeId);
+        return this.selectPrizeByProbability(prizes);
     }
 
     selectPrizeByProbability(prizes) {
-        // Filter prizes with quantity > 0 (in probability mode, this means they're still available)
+        // Filter prizes with quantity > 0 (means they're still available)
         const availablePrizes = prizes.filter(p => p.quantity > 0);
         if (availablePrizes.length === 0) {
             return null;
@@ -216,27 +193,11 @@ class SlotMachine {
         return selectedPrize;
     }
 
-    toggleWinningBox() {
-        const winningBox = document.getElementById('winningBox');
-        const toggleText = document.getElementById('toggleText');
-        if (winningBox.classList.contains('hidden')) {
-            winningBox.classList.remove('hidden');
-            toggleText.textContent = 'Hide Winning Box';
-        } else {
-            winningBox.classList.add('hidden');
-            toggleText.textContent = 'Show Winning Box';
-        }
-    }
-
     logSpin(winningPrize) {
-        const gameMode = storageManager.getGameMode();
         const logEntry = {
             prizeName: winningPrize.name,
-            gameMode: gameMode
+            gameMode: 'Probability'
         };
-        if (gameMode === 'duration') {
-            logEntry.remainingInDeck = storageManager.getDeck().length;
-        }
         storageManager.addLog(logEntry);
     }
 }

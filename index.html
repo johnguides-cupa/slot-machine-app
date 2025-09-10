@@ -6,44 +6,46 @@
     <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
-    <!-- Prize Showcase -->
-    <div class="prize-showcase">
-        <h2>Available Prizes</h2>
-        <div id="prizeList" class="prize-list"></div>
-    </div>
-
-    <!-- Slot Machine Container -->
-    <div class="slot-container">
-        <div class="winning-arrow">
-            <div class="arrow-pointer">→</div>
+    <!-- Machine Title (Outside Cabinet) -->
+    <!-- <div class="machine-title">
+        <h1>Ronaldos Casino</h1>
+        <div class="title-lights"></div>
+    </div> -->
+    
+    <!-- Complete Slot Machine Cabinet -->
+    <div class="slot-machine-cabinet">
+        <!-- Prize Showcase (Info Display) -->
+        <div class="prize-showcase">
+            <h2>Available Prizes</h2>
+            <div id="prizeList" class="prize-list"></div>
         </div>
-        
-        <div class="slot-machine">
-            <div class="winning-box hidden" id="winningBox"></div>
-            <div class="reel" id="reel1">
-                <div class="reel-strip"></div>
-            </div>
-            <div class="reel" id="reel2">
-                <div class="reel-strip"></div>
-            </div>
-            <div class="reel" id="reel3">
-                <div class="reel-strip"></div>
+
+        <!-- Slot Machine Container (Main Reels) -->
+        <div class="slot-container">
+            <div class="slot-machine">
+                <div class="winning-box hidden" id="winningBox"></div>
+                <div class="reel" id="reel1">
+                    <div class="reel-strip"></div>
+                </div>
+                <div class="reel" id="reel2">
+                    <div class="reel-strip"></div>
+                </div>
+                <div class="reel" id="reel3">
+                    <div class="reel-strip"></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Control Panel -->
-    <div class="control-panel">
-        <button id="toggleWinningBox" class="toggle-button">
-            <span id="toggleText">Show Winning Box</span>
-        </button>
-        <button id="spinButton" class="spin-button">
-            <span class="button-text">SPIN!</span>
-            <div class="button-glow"></div>
-        </button>
-        <div class="game-info">
-            <p id="modeDisplay">Mode: Probability</p>
-            <p id="remainingSpins"></p>
+        <!-- Control Panel (Machine Body) -->
+        <div class="control-panel">
+            <button id="spinButton" class="spin-button">
+                <span class="button-text">SPIN!</span>
+                <div class="button-glow"></div>
+            </button>
+            <!-- <div class="game-info">
+                <p id="modeDisplay">Probability Mode</p>
+            </div> -->
+            </div>
         </div>
     </div>
 
@@ -94,15 +96,8 @@
 
             <div id="settingsTab" class="tab-content">
                 <div class="settings-section">
-                    <h3>Game Mode</h3>
-                    <label class="radio-label">
-                        <input type="radio" name="gameMode" value="probability" checked>
-                        <span>Probability Mode</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="gameMode" value="duration">
-                        <span>Duration Mode (All prizes must be won)</span>
-                    </label>
+                    <h3>Game Settings</h3>
+                    <p>The slot machine uses probability-based mode where each spin has independent chances based on the prize percentages you set.</p>
                     <button id="resetGame" class="reset-btn">Reset Game & Clear Logs</button>
                 </div>
             </div>

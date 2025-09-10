@@ -89,6 +89,11 @@ class AnimationManager {
         // Stop idle animation before spinning
         this.stopIdleAnimation();
 
+        // Play spin sound
+        if (window.soundManager) {
+            window.soundManager.onSpinStart();
+        }
+
         const reels = Array.from(document.querySelectorAll('.reel .reel-strip'));
         const spinButton = document.getElementById('spinButton');
 
@@ -125,7 +130,9 @@ class AnimationManager {
             }
             // Center the winning icon
             const visibleCount = Math.floor(reel.parentNode.offsetHeight / this.reelHeight);
-            const centerOffset = this.reelHeight * Math.floor(visibleCount / 2);
+            // Adjust centerOffset to align with winning box position 
+            // Winning box is at 50% + 20px, and reel-item height is 154px
+            const centerOffset = this.reelHeight * Math.floor(visibleCount / 2) - 30;
             gsap.set(reel, { y: -(cycles * this.reelHeight - centerOffset) });
         });
 
@@ -134,7 +141,9 @@ class AnimationManager {
             // The final index is cycles (for the selected icon at the end)
             const finalIndex = cycles;
             const visibleCount = Math.floor(reel.parentNode.offsetHeight / this.reelHeight);
-            const centerOffset = this.reelHeight * Math.floor(visibleCount / 2);
+            // Adjust centerOffset to align with winning box position
+            // Winning box is at 50% + 20px, and reel-item height is 154px
+            const centerOffset = this.reelHeight * Math.floor(visibleCount / 2) - 30;
             return -(finalIndex * this.reelHeight - centerOffset);
         });
 
@@ -159,7 +168,13 @@ class AnimationManager {
                         y: targetPositions[i],
                         duration: 1.2,
                         ease: "power3.out",
-                        onComplete: resolve
+                        onComplete: () => {
+                            // Play reel stop sound
+                            if (window.soundManager) {
+                                window.soundManager.onReelStop();
+                            }
+                            resolve();
+                        }
                     });
                 }, i * staggerDelay * 1000 + spinCycles * spinSpeed * 1000);
             });
@@ -252,9 +267,20 @@ class AnimationManager {
         if (prize.isDefault) {
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
             if (prizeShield) prizeShield.textContent = '😢';
+            
+            // Play lose sound
+            if (window.soundManager) {
+                window.soundManager.onLose();
+            }
         } else {
             if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
             if (prizeShield) prizeShield.textContent = '🏆';
+            
+            // Play win sound (check if it's a jackpot - high value prize)
+            if (window.soundManager) {
+                const isJackpot = prize.chance <= 15; // Consider low chance prizes as jackpot
+                window.soundManager.onWin(isJackpot);
+            }
         }
 
         popup.classList.remove('hidden');

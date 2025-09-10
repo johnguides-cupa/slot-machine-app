@@ -1,4 +1,6 @@
 // Storage manager for the slot machine app
+import { PRIZE_ASSETS } from './assets/assets.js';
+
 class StorageManager {
     constructor() {
         this.initializeDefaults();
@@ -10,32 +12,34 @@ class StorageManager {
             const defaultPrizes = [
                 {
                     id: 1,
-                    name: "Chocolate Bar",
-                    image: "https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png",
+                    name: "Grand Prize", // Cambridge Shield
+                    image: PRIZE_ASSETS[0].path,
                     quantity: 50,
-                    chance: 60
+                    chance: 1
                 },
                 {
                     id: 2,
-                    name: "Gift Card",
-                    image: "https://static.vecteezy.com/system/resources/previews/027/879/811/non_2x/gift-card-in-pixel-art-style-vector.jpg",
+                    name: "2nd Prize", // Development EVP Shield
+                    image: PRIZE_ASSETS[1].path,
                     quantity: 10,
-                    chance: 25
+                    chance: 2
                 },
                 {
                     id: 3,
-                    name: "Premium Prize",
-                    image: "https://static.vecteezy.com/system/resources/previews/052/100/288/non_2x/pixel-art-gift-game-asset-design-free-vector.jpg",
+                    name: "3rd Prize", // Inclusion EVP Shield
+                    image: PRIZE_ASSETS[2].path,
                     quantity: 5,
-                    chance: 15
+                    chance: 3
+                },
+                 {
+                    id: 4,
+                    name: "Consolation", // Inclusion EVP Shield
+                    image: PRIZE_ASSETS[4].path,
+                    quantity: 5,
+                    chance: 94
                 }
             ];
             this.setPrizes(defaultPrizes);
-        }
-
-        // Initialize game settings
-        if (!localStorage.getItem('gameMode')) {
-            localStorage.setItem('gameMode', 'probability');
         }
     }
 
@@ -75,57 +79,6 @@ class StorageManager {
         return filteredPrizes.length !== prizes.length;
     }
 
-    // Game mode management
-    getGameMode() {
-        return localStorage.getItem('gameMode') || 'probability';
-    }
-
-    setGameMode(mode) {
-        localStorage.setItem('gameMode', mode);
-    }
-
-    // Duration deck management (for duration mode)
-    getDeck() {
-        const deck = localStorage.getItem('deck');
-        return deck ? JSON.parse(deck) : [];
-    }
-
-    setDeck(deck) {
-        localStorage.setItem('deck', JSON.stringify(deck));
-    }
-
-    generateDeck() {
-        const prizes = this.getPrizes();
-        const deck = [];
-
-        prizes.forEach(prize => {
-            for (let i = 0; i < prize.quantity; i++) {
-                deck.push(prize.id);
-            }
-        });
-
-        // Shuffle the deck
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-
-        this.setDeck(deck);
-        return deck;
-    }
-
-    drawFromDeck() {
-        const deck = this.getDeck();
-        if (deck.length === 0) {
-            this.generateDeck();
-            return this.drawFromDeck();
-        }
-
-        const drawnPrizeId = deck.pop();
-        this.setDeck(deck);
-        return drawnPrizeId;
-    }
-
     // Spin logs management
     getLogs() {
         const logs = localStorage.getItem('spinLogs');
@@ -152,32 +105,10 @@ class StorageManager {
     // Reset all data
     resetAll() {
         localStorage.removeItem('prizes');
-        localStorage.removeItem('deck');
         localStorage.removeItem('spinLogs');
-        localStorage.removeItem('gameMode');
         this.initializeDefaults();
     }
 
-    // Get remaining prizes count for duration mode
-    getRemainingPrizesCount() {
-        const deck = this.getDeck();
-        const prizes = this.getPrizes();
-        const counts = {};
-
-        // Initialize counts
-        prizes.forEach(prize => {
-            counts[prize.id] = 0;
-        });
-
-        // Count remaining in deck
-        deck.forEach(prizeId => {
-            if (counts[prizeId] !== undefined) {
-                counts[prizeId]++;
-            }
-        });
-
-        return counts;
-    }
 }
 
 // Global storage instance

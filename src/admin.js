@@ -1,4 +1,6 @@
 // Admin panel functionality
+import { PRIZE_ASSETS, getAssetUrl } from './assets/assets.js';
+
 class AdminPanel {
     constructor() {
         this.currentEditingPrize = null;
@@ -9,6 +11,25 @@ class AdminPanel {
         // Tab switching
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', () => this.switchTab(button.dataset.tab));
+        });
+
+        // Ensure prize name input accepts spaces
+        document.addEventListener('DOMContentLoaded', () => {
+            const prizeNameInput = document.getElementById('prizeName');
+            if (prizeNameInput) {
+                // Remove any restrictions that might prevent spaces
+                prizeNameInput.removeAttribute('pattern');
+                prizeNameInput.style.userSelect = 'text';
+                prizeNameInput.style.pointerEvents = 'auto';
+                
+                // Ensure spacebar works
+                prizeNameInput.addEventListener('keydown', (e) => {
+                    // Allow spacebar (keyCode 32)
+                    if (e.keyCode === 32) {
+                        e.stopPropagation();
+                    }
+                });
+            }
         });
 
         // Close admin panel
@@ -24,26 +45,22 @@ class AdminPanel {
 
         // Prize management
         document.getElementById('addPrize').addEventListener('click', () => {
+            if (window.soundManager) window.soundManager.onButtonClick();
             this.showPrizeEditor();
         });
 
         document.getElementById('savePrize').addEventListener('click', () => {
+            if (window.soundManager) window.soundManager.onButtonClick();
             this.savePrize();
         });
 
         document.getElementById('cancelEdit').addEventListener('click', () => {
+            if (window.soundManager) window.soundManager.onButtonClick();
             this.hidePrizeEditor();
         });
 
-        // Game settings
-        document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                storageManager.setGameMode(radio.value);
-                this.updateGameModeDisplay();
-            });
-        });
-
         document.getElementById('resetGame').addEventListener('click', () => {
+            if (window.soundManager) window.soundManager.onButtonClick();
             if (confirm('Are you sure you want to reset the game and clear all logs?')) {
                 this.resetGame();
             }
@@ -53,11 +70,32 @@ class AdminPanel {
     show() {
         document.getElementById('adminPanel').classList.remove('hidden');
         this.refreshContent();
+        
+        // Ensure prize name input works correctly
+        setTimeout(() => {
+            const prizeNameInput = document.getElementById('prizeName');
+            if (prizeNameInput) {
+                prizeNameInput.removeAttribute('pattern');
+                prizeNameInput.style.userSelect = 'text';
+                prizeNameInput.style.pointerEvents = 'auto';
+                
+                // Test that spaces work
+                prizeNameInput.addEventListener('keydown', (e) => {
+                    if (e.keyCode === 32) {
+                        e.stopPropagation();
+                    }
+                });
+                
+                console.log('Prize name input initialized for spaces');
+            }
+        }, 100);
     }
 
     hide() {
         document.getElementById('adminPanel').classList.add('hidden');
         this.hidePrizeEditor();
+        // Refresh slot machine reels when admin panel closes
+        this.refreshSlotMachine();
     }
 
     switchTab(tabName) {
@@ -145,14 +183,20 @@ class AdminPanel {
         ensureLabel('prizeQuantity', 'Quantity');
         ensureLabel('prizeChance', 'Win Chance (%)');
 
+        // Create image source selector if it doesn't exist
+        this.createImageSourceSelector();
+
         if (prize) {
             // Edit existing prize
             this.currentEditingPrize = prize;
             title.textContent = 'Edit Prize';
             document.getElementById('prizeName').value = prize.name;
-            document.getElementById('prizeImage').value = prize.image;
+            document.getElementById('prizeImage').value = prize.image || '';
             document.getElementById('prizeQuantity').value = prize.quantity;
             document.getElementById('prizeChance').value = prize.chance;
+            
+            // Set image source selector based on current image
+            this.updateImageSourceSelector(prize.image);
         } else {
             // Add new prize
             this.currentEditingPrize = null;
@@ -161,6 +205,9 @@ class AdminPanel {
             document.getElementById('prizeImage').value = '';
             document.getElementById('prizeQuantity').value = '';
             document.getElementById('prizeChance').value = '';
+            
+            // Reset image source selector
+            this.updateImageSourceSelector('');
         }
 
         // Add or update live total chance message
@@ -226,6 +273,196 @@ class AdminPanel {
         this.currentEditingPrize = null;
     }
 
+    createImageSourceSelector() {
+        // Check if the selector already exists
+        if (document.getElementById('imageSourceSelector')) return;
+
+        const prizeImageInput = document.getElementById('prizeImage');
+        const container = prizeImageInput.parentNode;
+
+        // Create image source selector
+        const selectorContainer = document.createElement('div');
+        selectorContainer.id = 'imageSourceSelector';
+        selectorContainer.className = 'image-source-selector';
+
+        // Create radio buttons for image source selection
+        const sourceLabel = document.createElement('label');
+        sourceLabel.textContent = 'Image Source';
+        sourceLabel.style.display = 'block';
+        sourceLabel.style.fontWeight = 'bold';
+        sourceLabel.style.margin = '8px 0 5px 0';
+
+        const urlOption = document.createElement('div');
+        urlOption.className = 'image-source-option';
+        urlOption.innerHTML = `
+            <label>
+                <input type="radio" name="imageSource" value="url" checked>
+                <span>Use URL</span>
+            </label>
+        `;
+
+        const assetOption = document.createElement('div');
+        assetOption.className = 'image-source-option';
+        assetOption.innerHTML = `
+            <label>
+                <input type="radio" name="imageSource" value="asset">
+                <span>Choose from Assets</span>
+            </label>
+        `;
+
+        // Create asset gallery
+        const assetGallery = document.createElement('div');
+        assetGallery.id = 'assetGallery';
+        assetGallery.className = 'asset-gallery hidden';
+        
+        PRIZE_ASSETS.forEach(asset => {
+            const assetItem = document.createElement('div');
+            assetItem.className = 'asset-item';
+            assetItem.dataset.assetId = asset.id;
+            assetItem.dataset.assetPath = asset.path;
+            
+            // Use getAssetUrl for proper path resolution
+            const imageUrl = getAssetUrl(asset.filename);
+            
+            assetItem.innerHTML = `
+                <img src="${imageUrl}" alt="${asset.name}" title="${asset.description}">
+                <span>${asset.name}</span>
+            `;
+            
+            assetItem.addEventListener('click', () => {
+                this.selectAsset(asset);
+            });
+            
+            assetGallery.appendChild(assetItem);
+        });
+
+        // Create image preview
+        const previewContainer = document.createElement('div');
+        previewContainer.id = 'imagePreview';
+        previewContainer.className = 'image-preview';
+        previewContainer.innerHTML = `
+            <label>Preview:</label>
+            <div class="preview-content">
+                <img id="previewImage" src="" alt="No image selected" style="display: none;">
+                <span id="previewText">No image selected</span>
+            </div>
+        `;
+
+        // Add event listeners for radio buttons
+        const radioButtons = [urlOption, assetOption];
+        radioButtons.forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            radio.addEventListener('change', () => {
+                this.handleImageSourceChange(radio.value);
+            });
+        });
+
+        // Add URL input change listener for preview
+        prizeImageInput.addEventListener('input', () => {
+            this.updateImagePreview(prizeImageInput.value);
+        });
+
+        // Insert elements into DOM
+        container.insertBefore(sourceLabel, prizeImageInput);
+        container.insertBefore(selectorContainer, prizeImageInput);
+        selectorContainer.appendChild(urlOption);
+        selectorContainer.appendChild(assetOption);
+        selectorContainer.appendChild(assetGallery);
+        container.insertBefore(previewContainer, prizeImageInput.nextSibling);
+    }
+
+    updateImageSourceSelector(currentImage) {
+        const urlRadio = document.querySelector('input[name="imageSource"][value="url"]');
+        const assetRadio = document.querySelector('input[name="imageSource"][value="asset"]');
+        
+        // Check if current image is from assets by comparing with generated URLs
+        const isAssetImage = PRIZE_ASSETS.some(asset => {
+            const assetUrl = getAssetUrl(asset.filename);
+            return currentImage === assetUrl || currentImage === asset.path || currentImage.includes(asset.filename);
+        });
+        
+        if (isAssetImage) {
+            assetRadio.checked = true;
+            this.handleImageSourceChange('asset');
+            // Select the matching asset
+            const matchingAsset = PRIZE_ASSETS.find(asset => {
+                const assetUrl = getAssetUrl(asset.filename);
+                return currentImage === assetUrl || currentImage === asset.path || currentImage.includes(asset.filename);
+            });
+            if (matchingAsset) {
+                this.highlightSelectedAsset(matchingAsset.id);
+            }
+        } else {
+            urlRadio.checked = true;
+            this.handleImageSourceChange('url');
+        }
+        
+        this.updateImagePreview(currentImage);
+    }
+
+    handleImageSourceChange(source) {
+        const prizeImageInput = document.getElementById('prizeImage');
+        const assetGallery = document.getElementById('assetGallery');
+        
+        if (source === 'asset') {
+            prizeImageInput.style.display = 'none';
+            assetGallery.classList.remove('hidden');
+        } else {
+            prizeImageInput.style.display = 'block';
+            assetGallery.classList.add('hidden');
+            this.clearAssetSelection();
+        }
+    }
+
+    selectAsset(asset) {
+        const prizeImageInput = document.getElementById('prizeImage');
+        const imageUrl = getAssetUrl(asset.filename);
+        prizeImageInput.value = imageUrl;
+        this.highlightSelectedAsset(asset.id);
+        this.updateImagePreview(imageUrl);
+    }
+
+    highlightSelectedAsset(assetId) {
+        // Remove previous selection
+        document.querySelectorAll('.asset-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Highlight selected asset
+        const selectedItem = document.querySelector(`[data-asset-id="${assetId}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+    }
+
+    clearAssetSelection() {
+        document.querySelectorAll('.asset-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+    }
+
+    updateImagePreview(imageSrc) {
+        const previewImage = document.getElementById('previewImage');
+        const previewText = document.getElementById('previewText');
+        
+        if (imageSrc && imageSrc.trim()) {
+            previewImage.src = imageSrc;
+            previewImage.style.display = 'block';
+            previewText.style.display = 'none';
+            
+            // Handle image load error
+            previewImage.onerror = () => {
+                previewImage.style.display = 'none';
+                previewText.style.display = 'block';
+                previewText.textContent = 'Failed to load image';
+            };
+        } else {
+            previewImage.style.display = 'none';
+            previewText.style.display = 'block';
+            previewText.textContent = 'No image selected';
+        }
+    }
+
     savePrize() {
         const name = document.getElementById('prizeName').value.trim();
         const image = document.getElementById('prizeImage').value.trim();
@@ -285,9 +522,10 @@ class AdminPanel {
         }
         this.refreshPrizesList();
 
-        // Update the main app display
+        // Update the main app display and refresh reels
         if (window.slotMachine) {
             window.slotMachine.updatePrizeDisplay();
+            window.slotMachine.populateReels();
         }
     }
 
@@ -304,23 +542,17 @@ class AdminPanel {
             storageManager.deletePrize(prizeId);
             this.refreshPrizesList();
             
-            // Update the main app display
+            // Update the main app display and refresh reels
             if (window.slotMachine) {
                 window.slotMachine.updatePrizeDisplay();
+                window.slotMachine.populateReels();
             }
         }
     }
 
     // Settings Management
     refreshSettings() {
-        const gameMode = storageManager.getGameMode();
-        document.querySelector(`input[value="${gameMode}"]`).checked = true;
-    }
-
-    updateGameModeDisplay() {
-        if (window.slotMachine) {
-            window.slotMachine.updateGameInfo();
-        }
+        // Settings tab now just shows information about probability mode
     }
 
     resetGame() {
@@ -359,6 +591,13 @@ class AdminPanel {
             `;
             container.appendChild(logEntry);
         });
+    }
+
+    refreshSlotMachine() {
+        // Refresh the slot machine reels with updated prize data
+        if (window.slotMachine) {
+            window.slotMachine.populateReels();
+        }
     }
 }
 

@@ -594,16 +594,6 @@ body {
         0 3px 7px rgba(0,0,0,0.2); /* Original black shadow for depth */
 }
 
-.reel-item span {
-    font-family: 'Value Sans', sans-serif; /* Keep brand typography for UI elements */
-    font-size: 1.14em; /* Scaled up from 0.65em */
-    font-weight: 600; /* Semibold */
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 2px; /* Scaled up from 1px */
-    text-shadow: 2px 2px 0px rgba(255,255,255,0.8); /* Original white text shadow */
-}
-
 /* Control Panel (Machine Body) */
 .control-panel {
     text-align: center;

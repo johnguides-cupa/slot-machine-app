@@ -25,7 +25,6 @@ class AnimationManager {
         item.className = 'reel-item';
         item.innerHTML = `
             <img src="${prize.image}" alt="${prize.name}" onerror="this.src='https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png'">
-            <span>${prize.name}</span>
         `;
         // Dynamically set reelHeight if not set
         if (!this.reelHeight) {

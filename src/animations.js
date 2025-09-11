@@ -398,6 +398,11 @@ class AnimationManager {
             force3D: true, // GPU acceleration
             onComplete: () => {
                 popup.classList.add('hidden');
+                
+                // Update prize display to reflect any quantity changes (like exhausted prizes)
+                if (window.slotMachine && window.slotMachine.updatePrizeDisplay) {
+                    window.slotMachine.updatePrizeDisplay();
+                }
             }
         });
     }

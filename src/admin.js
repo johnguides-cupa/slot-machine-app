@@ -255,16 +255,82 @@ class AdminPanel {
         } else {
             totalChance = prizes.reduce((sum, p) => sum + p.chance, 0) + chance;
         }
+        
         const msg = document.getElementById('chanceMessage');
+        
         if (totalChance < 100) {
             msg.textContent = `Total win chance: ${totalChance}%. ${100 - totalChance}% left to allocate.`;
             msg.style.color = '#e67e22';
+            this.hideAutoAdjustWarning();
         } else if (totalChance > 100) {
-            msg.textContent = `Total win chance: ${totalChance}%. Exceeded by ${totalChance - 100}%.`;
+            const excess = totalChance - 100;
+            msg.textContent = `Total win chance: ${totalChance}%. Exceeded by ${excess}%.`;
             msg.style.color = '#e74c3c';
+            this.showAutoAdjustWarning(excess);
         } else {
             msg.textContent = `Total win chance: 100%. Ready to save!`;
             msg.style.color = '#27ae60';
+            this.hideAutoAdjustWarning();
+        }
+    }
+
+    showAutoAdjustWarning(excessPercentage) {
+        let warningDiv = document.getElementById('autoAdjustWarning');
+        if (!warningDiv) {
+            warningDiv = document.createElement('div');
+            warningDiv.id = 'autoAdjustWarning';
+            warningDiv.style.cssText = `
+                margin: 15px 0;
+                padding: 15px;
+                background-color: rgba(255, 193, 7, 0.1);
+                border: 2px solid #ffc107;
+                border-radius: 8px;
+                color: #ff8f00;
+                font-weight: bold;
+                font-size: 0.95em;
+            `;
+            
+            const editor = document.getElementById('prizeEditor');
+            const chanceMessage = document.getElementById('chanceMessage');
+            chanceMessage.parentNode.insertBefore(warningDiv, chanceMessage.nextSibling);
+        }
+        
+        // Find the current highest percentage prize (excluding the one being edited)
+        const prizes = storageManager.getPrizes();
+        let highestPrize = null;
+        let highestChance = 0;
+        
+        for (const prize of prizes) {
+            if (this.currentEditingPrize && prize.id === this.currentEditingPrize.id) {
+                continue; // Skip the prize being edited
+            }
+            if (prize.chance > highestChance) {
+                highestChance = prize.chance;
+                highestPrize = prize;
+            }
+        }
+        
+        if (highestPrize) {
+            const newPercentage = Math.max(0.1, highestChance - excessPercentage);
+            warningDiv.innerHTML = `
+                <strong>⚠️ Auto-Adjustment Warning</strong><br>
+                If you save with this percentage, the excess ${excessPercentage.toFixed(1)}% will be automatically removed from the highest percentage prize:<br>
+                <strong>"${highestPrize.name}"</strong> will be reduced from ${highestChance}% to ${newPercentage.toFixed(1)}%
+            `;
+        } else {
+            warningDiv.innerHTML = `
+                <strong>⚠️ Auto-Adjustment Warning</strong><br>
+                Total percentage exceeds 100%. The excess will be automatically adjusted when saving.
+            `;
+        }
+        
+        warningDiv.style.display = 'block';
+    }
+
+    hideAutoAdjustWarning() {
+        const warningDiv = document.getElementById('autoAdjustWarning');
+        if (warningDiv) {
+            warningDiv.style.display = 'none';
         }
     }
 
@@ -485,18 +551,51 @@ class AdminPanel {
             totalChance = prizes.reduce((sum, p) => sum + p.chance, 0) + chance;
         }
 
+        // Handle auto-adjustment if total exceeds 100%
         if (totalChance > 100) {
-            msg.textContent = `Cannot save: Exceeded by ${totalChance - 100}%. Total must be exactly 100%.`;
-            msg.style.color = '#e74c3c';
-            return;
+            const excess = totalChance - 100;
+            
+            // Find the highest percentage prize (excluding the one being edited)
+            let highestPrize = null;
+            let highestChance = 0;
+            
+            for (const prize of prizes) {
+                if (this.currentEditingPrize && prize.id === this.currentEditingPrize.id) {
+                    continue; // Skip the prize being edited
+                }
+                if (prize.chance > highestChance) {
+                    highestChance = prize.chance;
+                    highestPrize = prize;
+                }
+            }
+            
+            if (highestPrize) {
+                // Reduce the highest percentage prize by the excess amount
+                const newHighestChance = Math.max(0.1, highestChance - excess);
+                
+                // Update the highest prize first
+                const updatedHighestPrize = {
+                    ...highestPrize,
+                    chance: newHighestChance
+                };
+                storageManager.updatePrize(updatedHighestPrize);
+                
+                msg.textContent = `Auto-adjusted: "${highestPrize.name}" reduced from ${highestChance}% to ${newHighestChance.toFixed(1)}% to maintain 100% total.`;
+                msg.style.color = '#ff8f00';
+            }
         }
 
         // Allow saving/updating even if total is less than 100%
-        if (totalChance < 100) {
-            msg.textContent = `Saved. ${100 - totalChance}% left to allocate. You must reach 100% before finishing.`;
+        const finalTotal = Math.min(totalChance, 100);
+        if (finalTotal < 100) {
+            msg.textContent = `Saved. ${100 - finalTotal}% left to allocate. You must reach 100% before finishing.`;
             msg.style.color = '#e67e22';
         } else {
-            msg.textContent = 'Saved! Total win chance is 100%. Ready to go.';
+            if (totalChance > 100) {
+                msg.textContent = 'Saved with auto-adjustment! Total win chance is now 100%.';
+            } else {
+                msg.textContent = 'Saved! Total win chance is 100%. Ready to go.';
+            }
             msg.style.color = '#27ae60';
         }
 
@@ -516,8 +615,12 @@ class AdminPanel {
             storageManager.addPrize(prizeData);
         }
 
+        // Hide the auto-adjust warning since we've handled it
+        this.hideAutoAdjustWarning();
+
         // Only close editor if total is 100
-        if (totalChance === 100) {
+        const newTotalChance = storageManager.getPrizes().reduce((sum, p) => sum + p.chance, 0);
+        if (Math.abs(newTotalChance - 100) < 0.01) {
             this.hidePrizeEditor();
         }
         this.refreshPrizesList();

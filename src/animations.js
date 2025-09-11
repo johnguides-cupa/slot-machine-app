@@ -186,7 +186,7 @@ class AnimationManager {
         // Show prize popup after animation
         setTimeout(() => {
             this.showPrizePopup(targetPrize);
-        }, 500);
+        }, 100); // Reduced delay from 500ms to 100ms
 
         // Re-enable spin button
         spinButton.disabled = false;
@@ -259,40 +259,81 @@ class AnimationManager {
         const prizeTitle = document.getElementById('prizePopupTitle');
         const prizeShield = popup.querySelector('.prize-shield');
 
-        prizeImage.src = prize.image;
+        // Pre-load image to prevent lag during animation
+        const img = new Image();
+        img.onload = () => {
+            prizeImage.src = prize.image;
+        };
+        img.src = prize.image;
+
         prizeName.textContent = prize.name;
+
+        // Force hardware acceleration before animation (moved up for both types)
+        gsap.set(popup, { force3D: true });
+        gsap.set(popup.querySelector('.popup-content'), { force3D: true });
 
         // If prize is default, show 'Better luck next time' and sad face, else 'Congratulations' and trophy
         if (prize.isDefault) {
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
             if (prizeShield) prizeShield.textContent = '😢';
             
-            // Play lose sound
-            if (window.soundManager) {
-                window.soundManager.onLose();
-            }
+            // Play lose sound with slight delay to not interfere with animation
+            setTimeout(() => {
+                if (window.soundManager) {
+                    window.soundManager.onLose();
+                }
+            }, 100);
         } else {
             if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
             if (prizeShield) prizeShield.textContent = '🏆';
             
-            // Play win sound (check if it's a jackpot - high value prize)
-            if (window.soundManager) {
-                const isJackpot = prize.chance <= 15; // Consider low chance prizes as jackpot
-                window.soundManager.onWin(isJackpot);
-            }
+            // Play win sound with slight delay to not interfere with animation
+            setTimeout(() => {
+                if (window.soundManager) {
+                    const isJackpot = prize.chance <= 15; // Consider low chance prizes as jackpot
+                    window.soundManager.onWin(isJackpot);
+                }
+            }, 100);
         }
 
         popup.classList.remove('hidden');
 
-        // Animate popup entrance
+        // Optimized popup entrance animation (same for both win/lose)
         gsap.fromTo(popup.querySelector('.popup-content'), 
-            { scale: 0, rotation: -10 },
-            { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.7)" }
+            { 
+                scale: 0, 
+                rotation: prize.isDefault ? 10 : -10, // Slight variation for lose vs win
+                opacity: 0
+            },
+            { 
+                scale: 1, 
+                rotation: 0, 
+                opacity: 1,
+                duration: 0.4, // Same duration for both
+                ease: "back.out(1.4)", // Same easing for both
+                force3D: true, // Force GPU acceleration
+                onComplete: () => {
+                    // Add a subtle pulse effect for "better luck next time" to match visual impact
+                    if (prize.isDefault) {
+                        gsap.to(popup.querySelector('.popup-content'), {
+                            scale: 1.02,
+                            duration: 0.3,
+                            ease: "power2.inOut",
+                            yoyo: true,
+                            repeat: 1,
+                            force3D: true
+                        });
+                    }
+                }
+            }
         );
 
         // Trigger confetti only if not default prize
         if (!prize.isDefault) {
-            this.triggerConfetti();
+            // Delay confetti slightly to not interfere with popup animation
+            setTimeout(() => {
+                this.triggerConfetti();
+            }, 200);
         }
     }
 
@@ -300,7 +341,12 @@ class AnimationManager {
     triggerConfetti() {
         const duration = 3000;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
+        const defaults = { 
+            startVelocity: 30, 
+            spread: 360, 
+            ticks: 60, 
+            zIndex: 1001 // Higher than popup background (1000) but lower than popup content
+        };
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
@@ -330,11 +376,16 @@ class AnimationManager {
     closePrizePopup() {
         const popup = document.getElementById('prizePopup');
         
+        // Force hardware acceleration
+        gsap.set(popup.querySelector('.popup-content'), { force3D: true });
+        
         gsap.to(popup.querySelector('.popup-content'), {
             scale: 0,
             rotation: 10,
-            duration: 0.3,
-            ease: "back.in(1.7)",
+            opacity: 0,
+            duration: 0.25, // Faster close animation
+            ease: "back.in(1.4)", // Less bounce
+            force3D: true, // GPU acceleration
             onComplete: () => {
                 popup.classList.add('hidden');
             }

@@ -272,26 +272,31 @@ class AnimationManager {
         gsap.set(popup, { force3D: true });
         gsap.set(popup.querySelector('.popup-content'), { force3D: true });
 
-        // If prize is default, show 'Better luck next time' and sad face, else 'Congratulations' and trophy
+        // If prize is default, show 'Better luck next time' and sad cat image, else 'Congratulations' and trophy
         if (prize.isDefault) {
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
-            if (prizeShield) prizeShield.textContent = '😢';
+            if (prizeShield) {
+                // Replace emoji with sad cat image using same pattern as prize images
+                prizeShield.innerHTML = `<img src="./assets/images/Sad_cat.png" alt="Sad Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png'">`;
+            }
             
-            // Play lose sound with slight delay to not interfere with animation
+            // Play custom miaw sound with slight delay to not interfere with animation
             setTimeout(() => {
                 if (window.soundManager) {
-                    window.soundManager.onLose();
+                    window.soundManager.onPopupLose();
                 }
             }, 100);
         } else {
             if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
-            if (prizeShield) prizeShield.textContent = '🏆';
+            if (prizeShield) {
+                // Replace trophy emoji with cat_win image
+                prizeShield.innerHTML = `<img src="./assets/images/cat_win.png" alt="Winner Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.textContent='🏆'">`;
+            }
             
-            // Play win sound with slight delay to not interfere with animation
+            // Play custom congratulations sound with slight delay to not interfere with animation
             setTimeout(() => {
                 if (window.soundManager) {
-                    const isJackpot = prize.chance <= 15; // Consider low chance prizes as jackpot
-                    window.soundManager.onWin(isJackpot);
+                    window.soundManager.onPopupWin();
                 }
             }, 100);
         }
@@ -375,6 +380,11 @@ class AnimationManager {
     // Close popup animation
     closePrizePopup() {
         const popup = document.getElementById('prizePopup');
+        
+        // Stop any playing custom sounds when closing popup
+        if (window.soundManager) {
+            window.soundManager.stopCustomSounds();
+        }
         
         // Force hardware acceleration
         gsap.set(popup.querySelector('.popup-content'), { force3D: true });

@@ -18,6 +18,9 @@ class SoundManager {
             console.warn('Web Audio API not supported:', error);
         }
 
+        // Load custom MP3 files
+        this.loadCustomSounds();
+
         // Define sound URLs (you can replace these with your own sound files)
         const soundUrls = {
             spin: 'https://www.soundjay.com/misc/sounds/slot-machine-spinning.wav',
@@ -32,6 +35,30 @@ class SoundManager {
         // For demo purposes, we'll create simple programmatic sounds
         // You can replace these with actual audio file loading
         this.createProgrammaticSounds();
+    }
+
+    // Load custom MP3 sound files
+    loadCustomSounds() {
+        this.customSounds = {};
+        
+        // Load congratulations sound
+        const congratsAudio = new Audio('./assets/sounds/Congratulations.mp3');
+        congratsAudio.volume = this.volume;
+        this.customSounds.congratulations = congratsAudio;
+
+        // Load miaw sound
+        const miawAudio = new Audio('./assets/sounds/miaw.mp3');
+        miawAudio.volume = this.volume;
+        this.customSounds.miaw = miawAudio;
+
+        // Handle loading errors gracefully
+        congratsAudio.addEventListener('error', () => {
+            console.warn('Could not load congratulations sound');
+        });
+
+        miawAudio.addEventListener('error', () => {
+            console.warn('Could not load miaw sound');
+        });
     }
 
     // Create simple beep sounds programmatically (fallback)
@@ -387,6 +414,52 @@ class SoundManager {
         this.playSound('lose');
     }
 
+    // Play congratulations sound for popup wins
+    onPopupWin() {
+        this.playCustomSound('congratulations');
+    }
+
+    // Play miaw sound for popup losses (default prize)
+    onPopupLose() {
+        this.playCustomSound('miaw');
+    }
+
+    // Play custom MP3 sounds
+    playCustomSound(soundName) {
+        if (this.isMuted || !this.customSounds || !this.customSounds[soundName]) {
+            return;
+        }
+
+        try {
+            const audio = this.customSounds[soundName];
+            audio.currentTime = 0; // Reset to beginning
+            audio.volume = this.volume;
+            audio.play().catch(error => {
+                console.warn(`Could not play ${soundName} sound:`, error);
+            });
+        } catch (error) {
+            console.warn(`Error playing custom sound ${soundName}:`, error);
+        }
+    }
+
+    // Stop all custom sounds
+    stopCustomSounds() {
+        if (!this.customSounds) {
+            return;
+        }
+
+        try {
+            Object.values(this.customSounds).forEach(audio => {
+                if (audio && !audio.paused) {
+                    audio.pause();
+                    audio.currentTime = 0; // Reset to beginning
+                }
+            });
+        } catch (error) {
+            console.warn('Error stopping custom sounds:', error);
+        }
+    }
+
     onButtonClick() {
         this.playSound('click');
     }
@@ -422,4 +495,6 @@ class SoundManager {
 }
 
 // Global sound manager instance
+// Initialize sound manager and load custom sounds
 window.soundManager = new SoundManager();
+window.soundManager.loadCustomSounds();

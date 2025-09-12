@@ -237,6 +237,16 @@ class SoundManager {
 
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume));
+        
+        // Update custom sounds volume if they exist
+        if (this.customSounds) {
+            Object.values(this.customSounds).forEach(audio => {
+                if (audio) {
+                    audio.volume = this.volume;
+                }
+            });
+        }
+        
         this.updateVolumeSlider();
     }
 

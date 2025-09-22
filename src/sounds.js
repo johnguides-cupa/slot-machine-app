@@ -507,8 +507,6 @@ class SoundManager {
                 align-items: center !important;
                 justify-content: center !important;
                 margin-left: 10px !important;
-                z-index: 9999 !important;
-                pointer-events: auto !important;
                 position: relative !important;
             }
 

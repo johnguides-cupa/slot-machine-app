@@ -7,10 +7,31 @@ class AnimationManager {
         this.performanceMode = 'high-quality'; // Default to high quality
         
         // Listen for performance mode changes
+        this.setupPerformanceModeListener();
+    }
+
+    // Setup performance mode listener with retry logic
+    setupPerformanceModeListener() {
         if (window.performanceManager) {
+            console.log('🎬 Setting up performance mode listener immediately');
             window.performanceManager.addListener((mode, config) => {
                 this.onPerformanceModeChange(mode, config);
             });
+            // Get current mode
+            this.performanceMode = window.performanceManager.getMode();
+        } else {
+            console.log('🎬 Performance manager not ready, setting up retry...');
+            // Retry every 500ms until performanceManager is available
+            const retryInterval = setInterval(() => {
+                if (window.performanceManager) {
+                    console.log('🎬 Performance manager found, setting up listener');
+                    window.performanceManager.addListener((mode, config) => {
+                        this.onPerformanceModeChange(mode, config);
+                    });
+                    this.performanceMode = window.performanceManager.getMode();
+                    clearInterval(retryInterval);
+                }
+            }, 500);
         }
     }
 
@@ -50,7 +71,13 @@ class AnimationManager {
 
     // Get animation settings based on current performance mode
     getAnimationSettings() {
+        // Check for current performance mode from performanceManager if available
+        if (window.performanceManager) {
+            this.performanceMode = window.performanceManager.getMode();
+        }
+        
         const isPerformanceMode = this.performanceMode === 'performance';
+        console.log(`🎬 Getting animation settings - Mode: ${this.performanceMode}, IsPerformanceMode: ${isPerformanceMode}`);
         
         return {
             // Spin settings - subtle but important differences
@@ -64,8 +91,11 @@ class AnimationManager {
             popupDuration: isPerformanceMode ? 0.3 : 0.4, // Slightly faster popup in performance mode
             popupEase: isPerformanceMode ? "back.out(1.2)" : "back.out(1.7)", // Less bounce in performance mode
             
-            // Confetti settings - this is the main difference
+            // Confetti settings - major performance impact
             enableConfetti: !isPerformanceMode, // Disable confetti in performance mode only
+            confettiAmount: isPerformanceMode ? 25 : 50, // Fewer particles in performance mode
+            confettiInterval: isPerformanceMode ? 500 : 150, // Less frequent in performance mode
+            confettiMultiplier: isPerformanceMode ? 1 : 2, // No doubling in performance mode
             
             // Idle animations
             enableIdleAnimations: !isPerformanceMode, // Disable idle animations in performance mode
@@ -421,30 +451,37 @@ class AnimationManager {
 
         // Trigger confetti only if not default prize and confetti is enabled
         if (!prize.isDefault && settings.enableConfetti) {
+            console.log(`🎊 Triggering confetti - Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
             // Delay confetti slightly to not interfere with popup animation
             setTimeout(() => {
                 this.triggerConfetti();
             }, 200);
+        } else {
+            console.log(`🚫 Confetti skipped - Default prize: ${prize.isDefault}, Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
         }
     }
 
     // Confetti celebration with performance-aware settings
     triggerConfetti() {
         const settings = this.getAnimationSettings();
-        const duration = this.performanceMode === 'performance' ? 0 : 5000; // No confetti in performance mode
+        console.log(`🎊 triggerConfetti() called - Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
+        
+        const duration = settings.enableConfetti ? 3000 : 0; // Use settings-based control
         const animationEnd = Date.now() + duration;
         const defaults = { 
             startVelocity: 30, 
             spread: 360, 
-            ticks: this.performanceMode === 'performance' ? 0 : 100, // More ticks in high quality
+            ticks: settings.enableConfetti ? 100 : 0, // Performance-based ticks
             zIndex: 1001, // Higher than popup background (1000) but lower than popup content
-            particleCount: settings.confettiAmount || 200
+            particleCount: settings.confettiAmount || 50
         };
 
-        if (this.performanceMode === 'performance') {
-            console.log('⚡ Confetti disabled in performance mode');
-            return; // Skip confetti entirely in performance mode
+        if (!settings.enableConfetti) {
+            console.log('⚡ Confetti disabled in performance mode - RETURNING EARLY');
+            return; // Skip confetti entirely when disabled
         }
+
+        console.log('🎊 Confetti enabled - proceeding with animation');
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
@@ -457,23 +494,27 @@ class AnimationManager {
                 return clearInterval(interval);
             }
 
-            const particleCount = (settings.confettiAmount || 50) * (timeLeft / duration);
+            const particleCount = settings.confettiAmount * (timeLeft / duration);
+            const multiplier = settings.confettiMultiplier || 1;
 
-            // More dramatic confetti bursts in high quality mode
+            // Performance-aware confetti bursts
             confetti(Object.assign({}, defaults, {
-                particleCount: particleCount * 2, // Double the particles
+                particleCount: particleCount * multiplier,
                 origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
             }));
             confetti(Object.assign({}, defaults, {
-                particleCount: particleCount * 2,
+                particleCount: particleCount * multiplier,
                 origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
             }));
-            // Additional center burst for high quality
-            confetti(Object.assign({}, defaults, {
-                particleCount: particleCount,
-                origin: { x: 0.5, y: 0.5 }
-            }));
-        }, this.performanceMode === 'performance' ? 1000 : 150); // More frequent in high quality
+            
+            // Center burst only in high quality mode (when multiplier > 1)
+            if (settings.confettiMultiplier > 1) {
+                confetti(Object.assign({}, defaults, {
+                    particleCount: particleCount,
+                    origin: { x: 0.5, y: 0.5 }
+                }));
+            }
+        }, settings.confettiInterval || 150); // Use performance-aware interval
     }
 
     // Close popup animation

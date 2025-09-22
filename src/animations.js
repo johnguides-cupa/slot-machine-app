@@ -1,9 +1,79 @@
-// Animation manager using GSAP
+// Animation manager using GSAP with Performance Mode Support
 class AnimationManager {
     constructor() {
         this.isSpinning = false;
         this.reelHeight = null; // Will be set dynamically
         this.idleTimelines = [];
+        this.performanceMode = 'high-quality'; // Default to high quality
+        
+        // Listen for performance mode changes
+        if (window.performanceManager) {
+            window.performanceManager.addListener((mode, config) => {
+                this.onPerformanceModeChange(mode, config);
+            });
+        }
+    }
+
+    // Handle performance mode changes
+    onPerformanceModeChange(mode, config) {
+        this.performanceMode = mode;
+        console.log(`🎬 Animation system switched to: ${mode}`);
+        
+        // Apply immediate optimizations
+        if (mode === 'performance') {
+            this.enablePerformanceOptimizations();
+        } else {
+            this.disablePerformanceOptimizations();
+        }
+    }
+
+    // Enable performance optimizations
+    enablePerformanceOptimizations() {
+        // Force GPU acceleration on all animated elements
+        const animatedElements = document.querySelectorAll('.reel, .reel-strip, .reel-item, .prize-popup, .popup-content');
+        animatedElements.forEach(el => {
+            el.style.transform = 'translateZ(0)';
+            el.style.willChange = 'transform';
+            el.style.backfaceVisibility = 'hidden';
+        });
+    }
+
+    // Disable performance optimizations (restore high quality)
+    disablePerformanceOptimizations() {
+        const animatedElements = document.querySelectorAll('.reel, .reel-strip, .reel-item, .prize-popup, .popup-content');
+        animatedElements.forEach(el => {
+            el.style.transform = '';
+            el.style.willChange = '';
+            el.style.backfaceVisibility = '';
+        });
+    }
+
+    // Get animation settings based on current performance mode
+    getAnimationSettings() {
+        const isPerformanceMode = this.performanceMode === 'performance';
+        
+        return {
+            // Spin settings - subtle but important differences
+            spinDuration: isPerformanceMode ? 0.08 : 0.12, // Slightly faster spins in performance mode
+            spinEase: "none", // Keep linear for both modes for consistent feel
+            stopDuration: isPerformanceMode ? 0.6 : 1.0, // Faster stops in performance mode
+            stopEase: isPerformanceMode ? "power2.out" : "power2.out", // Same easing, just faster
+            
+            // Prize popup settings - minimal differences
+            popupScale: true, // Keep scaling for both modes
+            popupDuration: isPerformanceMode ? 0.3 : 0.4, // Slightly faster popup in performance mode
+            popupEase: isPerformanceMode ? "back.out(1.2)" : "back.out(1.7)", // Less bounce in performance mode
+            
+            // Confetti settings - this is the main difference
+            enableConfetti: !isPerformanceMode, // Disable confetti in performance mode only
+            
+            // Idle animations
+            enableIdleAnimations: !isPerformanceMode, // Disable idle animations in performance mode
+            
+            // Performance optimizations (these are the real improvements)
+            enableGPUAcceleration: isPerformanceMode, // Enable GPU acceleration in performance mode
+            reduceAnimationComplexity: isPerformanceMode // Simplify animations in performance mode
+        };
     }
 
     // Create reel items for animation
@@ -147,10 +217,11 @@ class AnimationManager {
         });
 
         // Seamless slot machine spin: all reels spin in a loop, then each stops in turn
-        const spinSpeed = 0.15;
-        const spinCycles = 15;
-        const staggerDelay = 1.5;
-        const itemsToSpin = this.reelHeight * 10;
+        const settings = this.getAnimationSettings();
+        const spinSpeed = settings.spinDuration;
+        const spinCycles = this.performanceMode === 'performance' ? 10 : 15; // Fewer cycles in performance mode
+        const staggerDelay = this.performanceMode === 'performance' ? 1.0 : 1.5; // Faster stagger in performance mode
+        const itemsToSpin = this.reelHeight * (this.performanceMode === 'performance' ? 6 : 10); // Less movement in performance mode
         const reelLoops = [];
         const reelPromises = reels.map((reel, i) => {
             return new Promise(resolve => {
@@ -159,14 +230,14 @@ class AnimationManager {
                 loopTimeline.to(reel, {
                     y: `-=${itemsToSpin}`,
                     duration: spinSpeed,
-                    ease: "none"
+                    ease: settings.spinEase
                 });
                 setTimeout(() => {
                     loopTimeline.kill();
                     gsap.to(reel, {
                         y: targetPositions[i],
-                        duration: 1.2,
-                        ease: "power3.out",
+                        duration: settings.stopDuration,
+                        ease: settings.stopEase,
                         onComplete: () => {
                             // Play reel stop sound
                             if (window.soundManager) {
@@ -301,38 +372,55 @@ class AnimationManager {
 
         popup.classList.remove('hidden');
 
-        // Optimized popup entrance animation (same for both win/lose)
-        gsap.fromTo(popup.querySelector('.popup-content'), 
-            { 
-                scale: 0, 
-                rotation: prize.isDefault ? 10 : -10, // Slight variation for lose vs win
-                opacity: 0
-            },
-            { 
-                scale: 1, 
-                rotation: 0, 
-                opacity: 1,
-                duration: 0.4, // Same duration for both
-                ease: "back.out(1.4)", // Same easing for both
-                force3D: true, // Force GPU acceleration
-                onComplete: () => {
-                    // Add a subtle pulse effect for "better luck next time" to match visual impact
-                    if (prize.isDefault) {
-                        gsap.to(popup.querySelector('.popup-content'), {
-                            scale: 1.02,
-                            duration: 0.3,
-                            ease: "power2.inOut",
-                            yoyo: true,
-                            repeat: 1,
-                            force3D: true
-                        });
+        // Get performance-optimized animation settings
+        const settings = this.getAnimationSettings();
+
+        // Optimized popup entrance animation
+        if (settings.popupScale) {
+            // High quality mode - full scale animation with bounce
+            gsap.fromTo(popup.querySelector('.popup-content'), 
+                { 
+                    scale: 0, 
+                    rotation: prize.isDefault ? 10 : -10, // Slight variation for lose vs win
+                    opacity: 0
+                },
+                { 
+                    scale: 1, 
+                    rotation: 0, 
+                    opacity: 1,
+                    duration: settings.popupDuration,
+                    ease: settings.popupEase,
+                    force3D: true,
+                    onComplete: () => {
+                        // Add a subtle pulse effect for "better luck next time"
+                        if (prize.isDefault && this.performanceMode === 'high-quality') {
+                            gsap.to(popup.querySelector('.popup-content'), {
+                                scale: 1.02,
+                                duration: 0.3,
+                                ease: "power2.inOut",
+                                yoyo: true,
+                                repeat: 1,
+                                force3D: true
+                            });
+                        }
                     }
                 }
-            }
-        );
+            );
+        } else {
+            // Performance mode - simple fade in
+            gsap.fromTo(popup.querySelector('.popup-content'), 
+                { opacity: 0 },
+                { 
+                    opacity: 1,
+                    duration: settings.popupDuration,
+                    ease: settings.popupEase,
+                    force3D: true
+                }
+            );
+        }
 
-        // Trigger confetti only if not default prize
-        if (!prize.isDefault) {
+        // Trigger confetti only if not default prize and confetti is enabled
+        if (!prize.isDefault && settings.enableConfetti) {
             // Delay confetti slightly to not interfere with popup animation
             setTimeout(() => {
                 this.triggerConfetti();
@@ -340,16 +428,23 @@ class AnimationManager {
         }
     }
 
-    // Confetti celebration
+    // Confetti celebration with performance-aware settings
     triggerConfetti() {
-        const duration = 3000;
+        const settings = this.getAnimationSettings();
+        const duration = this.performanceMode === 'performance' ? 0 : 5000; // No confetti in performance mode
         const animationEnd = Date.now() + duration;
         const defaults = { 
             startVelocity: 30, 
             spread: 360, 
-            ticks: 60, 
-            zIndex: 1001 // Higher than popup background (1000) but lower than popup content
+            ticks: this.performanceMode === 'performance' ? 0 : 100, // More ticks in high quality
+            zIndex: 1001, // Higher than popup background (1000) but lower than popup content
+            particleCount: settings.confettiAmount || 200
         };
+
+        if (this.performanceMode === 'performance') {
+            console.log('⚡ Confetti disabled in performance mode');
+            return; // Skip confetti entirely in performance mode
+        }
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
@@ -362,17 +457,23 @@ class AnimationManager {
                 return clearInterval(interval);
             }
 
-            const particleCount = 50 * (timeLeft / duration);
+            const particleCount = (settings.confettiAmount || 50) * (timeLeft / duration);
 
+            // More dramatic confetti bursts in high quality mode
             confetti(Object.assign({}, defaults, {
-                particleCount,
+                particleCount: particleCount * 2, // Double the particles
                 origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
             }));
             confetti(Object.assign({}, defaults, {
-                particleCount,
+                particleCount: particleCount * 2,
                 origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
             }));
-        }, 250);
+            // Additional center burst for high quality
+            confetti(Object.assign({}, defaults, {
+                particleCount: particleCount,
+                origin: { x: 0.5, y: 0.5 }
+            }));
+        }, this.performanceMode === 'performance' ? 1000 : 150); // More frequent in high quality
     }
 
     // Close popup animation

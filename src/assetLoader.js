@@ -1,4 +1,4 @@
-// Asset loader with loading screen
+// webOS-Enhanced Asset loader with loading screen and optimization warnings
 class AssetLoader {
     constructor() {
         this.totalAssets = 0;
@@ -9,6 +9,11 @@ class AssetLoader {
         this.isLoading = false;
         this.loadedAudioObjects = {}; // Store loaded Audio objects
         this.loadedImageObjects = {}; // Store loaded Image objects
+        
+        // webOS optimization tracking
+        this.largeImageWarnings = [];
+        this.maxImageSizeKB = 500; // webOS recommended max
+        this.optimizationAdvice = [];
     }
 
     // Add callback for loading progress updates
@@ -37,15 +42,30 @@ class AssetLoader {
         }
     }
 
-    // Load a single image with fallback path
+    // Load a single image with webOS optimization monitoring and fallback path
     loadImage(src) {
         return new Promise((resolve, reject) => {
             const img = new Image();
             
+            // webOS optimizations
+            img.loading = 'eager';
+            img.decoding = 'async';
+            img.crossOrigin = 'anonymous';
+            
+            // GPU acceleration hints
+            img.style.willChange = 'transform';
+            img.style.transform = 'translateZ(0)';
+            img.style.backfaceVisibility = 'hidden';
+            
             img.onload = () => {
                 this.loadedAssets++;
+                
                 // Store the loaded image object
                 this.loadedImageObjects[src] = img;
+                
+                // Monitor image size for webOS optimization warnings
+                this.checkImageOptimization(img, src);
+                
                 this.updateProgress();
                 resolve(img);
             };
@@ -56,9 +76,18 @@ class AssetLoader {
                     const fallbackSrc = src.replace('/slot-machine-app', '');
                     const fallbackImg = new Image();
                     
+                    // Apply same webOS optimizations to fallback
+                    fallbackImg.loading = 'eager';
+                    fallbackImg.decoding = 'async';
+                    fallbackImg.crossOrigin = 'anonymous';
+                    fallbackImg.style.willChange = 'transform';
+                    fallbackImg.style.transform = 'translateZ(0)';
+                    fallbackImg.style.backfaceVisibility = 'hidden';
+                    
                     fallbackImg.onload = () => {
                         this.loadedAssets++;
                         this.loadedImageObjects[src] = fallbackImg;
+                        this.checkImageOptimization(fallbackImg, src);
                         this.updateProgress();
                         resolve(fallbackImg);
                     };
@@ -78,12 +107,53 @@ class AssetLoader {
                     reject(new Error(`Failed to load image: ${src}`));
                 }
             };
-            
+
             img.src = src;
         });
     }
 
-    // Load a single audio file
+    // Check if image needs optimization for webOS
+    checkImageOptimization(img, src) {
+        // Estimate file size (rough approximation)
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        
+        try {
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const estimatedSizeKB = Math.round(imageData.data.length / 1024);
+            
+            // Check for optimization opportunities
+            if (estimatedSizeKB > this.maxImageSizeKB) {
+                const warning = {
+                    src,
+                    estimatedSizeKB,
+                    resolution: `${img.naturalWidth}x${img.naturalHeight}`,
+                    advice: `Consider optimizing: Reduce size by ~${Math.round((estimatedSizeKB - this.maxImageSizeKB) / estimatedSizeKB * 100)}%`
+                };
+                this.largeImageWarnings.push(warning);
+                
+                console.warn(`📊 webOS: Large image detected - ${src}`);
+                console.warn(`   Size: ~${estimatedSizeKB}KB, Resolution: ${warning.resolution}`);
+                console.warn(`   Recommendation: ${warning.advice}`);
+            }
+            
+            // Check resolution
+            if (img.naturalWidth > 1920 || img.naturalHeight > 1080) {
+                this.optimizationAdvice.push({
+                    src,
+                    type: 'resolution',
+                    message: `Resolution ${img.naturalWidth}x${img.naturalHeight} > TV standard (1920x1080)`
+                });
+            }
+            
+        } catch (error) {
+            // Canvas operations may fail for cross-origin images
+            console.log(`Cannot analyze image size for: ${src} (CORS restriction)`);
+        }
+    }    // Load a single audio file
     loadAudio(src) {
         return new Promise((resolve, reject) => {
             const audio = new Audio();
@@ -350,9 +420,13 @@ class AssetLoader {
             const loadingContainer = document.querySelector('.loading-container');
             
             if (loadingDetails) {
+                // Generate optimization warnings for webOS
+                const optimizationWarnings = this.generateOptimizationReport();
+                
                 if (success) {
                     loadingDetails.innerHTML = `
                         ✅ All assets loaded successfully!<br>
+                        ${optimizationWarnings}
                         <small style="color: rgba(255,255,255,0.7); margin-top: 10px; display: block;">
                             Click anywhere to enable audio and start the game
                         </small>
@@ -360,6 +434,7 @@ class AssetLoader {
                 } else {
                     loadingDetails.innerHTML = `
                         ⚠️ ${failedCount} assets failed to load, but game can still run.<br>
+                        ${optimizationWarnings}
                         <small style="color: rgba(255,255,255,0.7); margin-top: 10px; display: block;">
                             Click anywhere to enable audio and start the game
                         </small>
@@ -388,6 +463,33 @@ class AssetLoader {
         if (loadingScreen) {
             loadingScreen.remove();
         }
+    }
+
+    // Generate webOS optimization report for loading screen
+    generateOptimizationReport() {
+        if (this.largeImageWarnings.length === 0 && this.optimizationAdvice.length === 0) {
+            return `<div style="color: #4CAF50; font-size: 12px; margin: 8px 0;">📺 webOS optimized - All images TV-ready!</div>`;
+        }
+
+        let report = '';
+        
+        if (this.largeImageWarnings.length > 0) {
+            report += `<div style="color: #ff9800; font-size: 11px; margin: 8px 0; background: rgba(255,152,0,0.1); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,152,0,0.3);">
+                📊 webOS Performance: ${this.largeImageWarnings.length} large image${this.largeImageWarnings.length > 1 ? 's' : ''} detected<br>
+                <small style="color: rgba(255,255,255,0.7);">Consider optimizing for faster TV loading</small>
+            </div>`;
+        }
+
+        if (this.optimizationAdvice.length > 0) {
+            const resolutionIssues = this.optimizationAdvice.filter(advice => advice.type === 'resolution').length;
+            if (resolutionIssues > 0) {
+                report += `<div style="color: #2196F3; font-size: 11px; margin: 8px 0; background: rgba(33,150,243,0.1); padding: 8px; border-radius: 4px; border: 1px solid rgba(33,150,243,0.3);">
+                    📺 ${resolutionIssues} image${resolutionIssues > 1 ? 's' : ''} larger than TV resolution
+                </div>`;
+            }
+        }
+
+        return report;
     }
 
     // Initialize asset loading with loading screen

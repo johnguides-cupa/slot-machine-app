@@ -10,6 +10,99 @@ class AdminPanel {
     constructor() {
         this.currentEditingPrize = null;
         this.initializeEventListeners();
+        this.initializeWebOSOptimizations();
+    }
+
+    // webOS TV optimizations for remote control navigation
+    initializeWebOSOptimizations() {
+        // Add keyboard navigation support for TV remotes
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('adminPanel').classList.contains('hidden')) {
+                return; // Only handle keys when admin panel is open
+            }
+
+            switch(e.key) {
+                case 'Escape':
+                    this.hide();
+                    break;
+                case 'Enter':
+                    // If focused element is a button, click it
+                    if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                        document.activeElement.click();
+                    }
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    // Navigate between tabs
+                    this.navigateTabs(e.key === 'ArrowRight');
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    // Navigate within forms and lists
+                    this.navigateElements(e.key === 'ArrowDown');
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Enhance focus management for TV navigation
+        this.enhanceFocusManagement();
+    }
+
+    navigateTabs(forward) {
+        const tabs = document.querySelectorAll('.tab-button');
+        const activeTab = document.querySelector('.tab-button.active');
+        const currentIndex = Array.from(tabs).indexOf(activeTab);
+        
+        let newIndex;
+        if (forward) {
+            newIndex = (currentIndex + 1) % tabs.length;
+        } else {
+            newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        }
+        
+        tabs[newIndex].click();
+        tabs[newIndex].focus();
+    }
+
+    navigateElements(down) {
+        const focusableElements = document.querySelectorAll(
+            '#adminPanel button:not([disabled]), #adminPanel input:not([disabled]), #adminPanel [tabindex]:not([tabindex="-1"])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(document.activeElement);
+        
+        if (currentIndex === -1) {
+            // No element focused, focus first element
+            if (focusableElements.length > 0) {
+                focusableElements[0].focus();
+            }
+            return;
+        }
+        
+        let newIndex;
+        if (down) {
+            newIndex = (currentIndex + 1) % focusableElements.length;
+        } else {
+            newIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        }
+        
+        focusableElements[newIndex].focus();
+    }
+
+    enhanceFocusManagement() {
+        // Make sure all interactive elements are properly focusable
+        document.addEventListener('DOMContentLoaded', () => {
+            const interactiveElements = document.querySelectorAll(
+                '#adminPanel button, #adminPanel input, .prize-card'
+            );
+            
+            interactiveElements.forEach(element => {
+                if (!element.hasAttribute('tabindex')) {
+                    element.setAttribute('tabindex', '0');
+                }
+            });
+        });
     }
 
     initializeEventListeners() {
@@ -76,8 +169,15 @@ class AdminPanel {
         document.getElementById('adminPanel').classList.remove('hidden');
         this.refreshContent();
         
-        // Ensure prize name input works correctly
+        // webOS TV focus management
         setTimeout(() => {
+            // Focus the first tab button for TV navigation
+            const firstTab = document.querySelector('.tab-button.active');
+            if (firstTab) {
+                firstTab.focus();
+            }
+            
+            // Ensure prize name input works correctly
             const prizeNameInput = document.getElementById('prizeName');
             if (prizeNameInput) {
                 prizeNameInput.removeAttribute('pattern');
@@ -94,6 +194,8 @@ class AdminPanel {
                 console.log('Prize name input initialized for spaces');
             }
         }, 100);
+        
+        console.log('🔧 Admin panel opened - webOS TV optimized');
     }
 
     hide() {
@@ -1396,14 +1498,183 @@ class AdminPanel {
     }
 }
 
-// Admin access function
+// Admin access function - webOS TV optimized
 function showAdminLogin() {
-    const password = prompt('Enter admin password:');
-    if (password === 'admin123') { // Simple password - change as needed
-        adminPanel.show();
-    } else if (password !== null) {
-        alert('Invalid password');
-    }
+    // Create a more TV-friendly login dialog
+    const loginOverlay = document.createElement('div');
+    loginOverlay.id = 'adminLoginOverlay';
+    loginOverlay.innerHTML = `
+        <div class="admin-login-dialog">
+            <h2>🔐 Admin Access</h2>
+            <p>Enter admin password to access management panel</p>
+            <input type="password" id="adminPasswordInput" placeholder="Password" maxlength="20">
+            <div class="login-buttons">
+                <button id="loginSubmit">Login</button>
+                <button id="loginCancel">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Add webOS-optimized styles
+    const loginStyles = document.createElement('style');
+    loginStyles.textContent = `
+        #adminLoginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        
+        .admin-login-dialog {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+            text-align: center;
+            color: white;
+            min-width: 400px;
+        }
+        
+        .admin-login-dialog h2 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        
+        .admin-login-dialog p {
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            color: #ecf0f1;
+        }
+        
+        #adminPasswordInput {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            background: #34495e;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+        }
+        
+        #adminPasswordInput:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        
+        .login-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .login-buttons button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+        
+        #loginSubmit {
+            background: #27ae60;
+            color: white;
+        }
+        
+        #loginSubmit:hover, #loginSubmit:focus {
+            background: #2ecc71;
+            transform: translateY(-2px);
+            outline: 2px solid #FFD700;
+            outline-offset: 2px;
+        }
+        
+        #loginCancel {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        #loginCancel:hover, #loginCancel:focus {
+            background: #c0392b;
+            transform: translateY(-2px);
+            outline: 2px solid #FFD700;
+            outline-offset: 2px;
+        }
+    `;
+    
+    document.head.appendChild(loginStyles);
+    document.body.appendChild(loginOverlay);
+    
+    const passwordInput = document.getElementById('adminPasswordInput');
+    const submitButton = document.getElementById('loginSubmit');
+    const cancelButton = document.getElementById('loginCancel');
+    
+    // Focus password input
+    setTimeout(() => passwordInput.focus(), 100);
+    
+    // Handle login submission
+    const handleLogin = () => {
+        const password = passwordInput.value;
+        if (password === 'admin123') { // Simple password - change as needed
+            document.body.removeChild(loginOverlay);
+            document.head.removeChild(loginStyles);
+            adminPanel.show();
+            if (window.soundManager) window.soundManager.onButtonClick();
+        } else if (password !== '') {
+            passwordInput.value = '';
+            passwordInput.style.borderColor = '#e74c3c';
+            passwordInput.placeholder = 'Invalid password - try again';
+            setTimeout(() => {
+                passwordInput.style.borderColor = '#34495e';
+                passwordInput.placeholder = 'Password';
+            }, 2000);
+            if (window.soundManager) window.soundManager.onLose();
+        }
+    };
+    
+    const handleCancel = () => {
+        document.body.removeChild(loginOverlay);
+        document.head.removeChild(loginStyles);
+        if (window.soundManager) window.soundManager.onButtonClick();
+    };
+    
+    // Event listeners
+    submitButton.addEventListener('click', handleLogin);
+    cancelButton.addEventListener('click', handleCancel);
+    
+    // Enter key submits, Escape cancels
+    passwordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            handleLogin();
+        } else if (e.key === 'Escape') {
+            handleCancel();
+        }
+    });
+    
+    // Remote control navigation
+    loginOverlay.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            if (document.activeElement === submitButton) {
+                cancelButton.focus();
+            } else if (document.activeElement === cancelButton) {
+                submitButton.focus();
+            }
+            e.preventDefault();
+        }
+    });
 }
 
 // Make showAdminLogin globally available

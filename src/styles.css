@@ -1,6 +1,75 @@
 /* Import Brand Typography */
 @import url('https://fonts.googleapis.com/css2?family=Value+Serif:wght@400;600;700&family=Value+Sans:wght@400;600;700&family=Open+Sans:wght@300;400;600;700&display=swap');
 
+/* webOS Smart TV Asset Optimizations */
+.webos-optimized-image {
+    /* GPU acceleration for webOS */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    
+    /* Image rendering optimization for Smart TVs */
+    image-rendering: -webkit-optimize-contrast; /* WebKit based TV browsers */
+    image-rendering: optimize-quality; /* Standard */
+    image-rendering: auto; /* Let TV browser choose best */
+    
+    /* Memory optimization */
+    max-width: 100%;
+    height: auto;
+    
+    /* Prevent image flickering during loading */
+    background-color: transparent;
+    transition: opacity 0.2s ease;
+}
+
+/* Progressive loading states for webOS */
+.webos-image-loading {
+    opacity: 0.7;
+    background-color: rgba(44, 62, 80, 0.3);
+}
+
+.webos-image-loaded {
+    opacity: 1;
+    background-color: transparent;
+}
+
+/* TV-specific responsive image containers */
+.webos-image-container {
+    position: relative;
+    overflow: hidden;
+    
+    /* Force hardware acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+    
+    /* Optimize for TV viewing distance */
+    max-width: min(100vw, 1920px);
+    max-height: min(100vh, 1080px);
+}
+
+/* Critical image priority for webOS initial load */
+.webos-critical-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+    
+    /* Immediate GPU acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Standard image lazy loading for webOS */
+.webos-standard-image {
+    content-visibility: auto;
+    
+    /* Progressive enhancement */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.webos-standard-image.loaded {
+    opacity: 1;
+}
+
 /* 
 Responsive scaling - 175% base size with responsive breakpoints 
 html {
@@ -673,9 +742,23 @@ body {
     position: absolute;
     width: 100%;
     top: 0;
-    /* Smooth animation rendering */
+    
+    /* Enhanced smooth animation rendering for webOS */
     will-change: transform;
     transform: translateZ(0);
+    backface-visibility: hidden;
+    
+    /* Optimize for smooth scrolling during animation */
+    contain: layout style paint;
+    overflow: hidden;
+    
+    /* Force hardware acceleration */
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    
+    /* Prevent subpixel rendering issues during animation */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-speed;
 }
 
 .reel-item {
@@ -686,18 +769,27 @@ body {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid rgba(200,200,200,0.3); /* Simple thin border */
-    background: 
-        linear-gradient(180deg, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%); /* Clean white gradient */
+    
+    /* Simplified background for smooth spinning - no gradients during animation */
+    background: #f0f0f0; /* Solid color instead of gradient to prevent flickering */
     color: #333;
-    /* Simple flat design for content */
+    
+    /* webOS spinning optimizations */
     position: relative;
     backface-visibility: hidden;
     transform: translateZ(0);
+    will-change: transform;
+    
+    /* Prevent layout shifts during animation */
+    contain: layout style paint;
+    
+    /* Optimize for fast animation */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .reel-item:nth-child(even) {
-    background: 
-        linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%); /* Clean alternating gradient */
+    background: #e8e8e8; /* Solid alternating color instead of gradient */
 }
 
 .reel-item img {
@@ -708,18 +800,75 @@ body {
     object-fit: contain; /* Show entire image without cropping, fit within the area */
     border-radius: 0; /* Remove border radius */
     margin: 0; /* Remove all margins */
-    background: transparent; /* Remove background */
     padding: 0; /* Remove padding */
     border: none; /* Remove border completely */
+    
+    /* Simplified shadows - remove during spinning for performance */
+    box-shadow: none; /* Remove complex shadows that cause flickering during fast animation */
+    
+    /* webOS spinning optimizations */
+    image-rendering: auto; /* Let browser optimize for animation speed */
+    will-change: transform; /* Hint browser for GPU acceleration */
+    backface-visibility: hidden; /* Prevent flickering */
+    transform: translateZ(0); /* Force GPU layer */
+    
+    /* Prevent image loading flicker */
+    background-color: transparent;
+    
+    /* Optimize for animation performance */
+    pointer-events: none; /* Disable events during spinning */
+    user-select: none; /* Prevent selection during animation */
+    
+    /* Ensure crisp rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0); /* Force GPU layer */
+    backface-visibility: hidden; /* Prevent flickering on back face */
+    -webkit-backface-visibility: hidden; /* WebKit specific */
+    pointer-events: none; /* Prevent interaction during animation */
+}
+
+/* webOS Spinning State Optimizations */
+.reel-spinning .reel-item {
+    /* Enhanced performance during spinning */
+    background: #f0f0f0 !important; /* Force solid colors during animation */
+    box-shadow: none !important; /* Remove all shadows during spinning */
+    border: none !important; /* Remove borders during animation */
+}
+
+.reel-spinning .reel-item:nth-child(even) {
+    background: #e8e8e8 !important; /* Solid alternating color */
+}
+
+.reel-spinning .reel-item img {
+    /* Maximum performance for images during spinning */
+    image-rendering: -webkit-optimize-contrast; /* Optimize for speed */
+    image-rendering: optimize-speed; /* Prioritize speed over quality */
+    transform: translateZ(0) scale(0.999); /* Slight scale to force new layer and prevent subpixel issues */
+    filter: none; /* Remove any filters during animation */
+    opacity: 1; /* Ensure full opacity */
+}
+
+/* Restore visual effects when not spinning */
+.reel:not(.reel-spinning) .reel-item {
+    /* Restore gradients when not spinning */
+    background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%);
+    transition: background 0.3s ease; /* Smooth transition back */
+}
+
+.reel:not(.reel-spinning) .reel-item:nth-child(even) {
+    background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%);
+}
+
+.reel:not(.reel-spinning) .reel-item img {
+    /* Restore shadows when not spinning */
     box-shadow: 
-        inset 2px 2px 0px rgba(255,255,255,0.5), /* Original white highlight */
-        inset -2px -2px 0px rgba(0,0,0,0.3), /* Original black shadow */
-        0 3px 7px rgba(0,0,0,0.2); /* Original black shadow for depth */
-    /* Improve image rendering quality */
-    image-rendering: -webkit-optimize-contrast; /* For WebKit browsers */
-    image-rendering: crisp-edges; /* For modern browsers */
-    image-rendering: pixelated; /* Fallback for older browsers */
-    image-rendering: auto; /* Let browser choose best quality */
+        inset 2px 2px 0px rgba(255,255,255,0.5),
+        inset -2px -2px 0px rgba(0,0,0,0.3),
+        0 3px 7px rgba(0,0,0,0.2);
+    image-rendering: auto; /* Best quality when stationary */
+    transform: translateZ(0); /* Standard transform */
+    transition: all 0.3s ease; /* Smooth transition back */
 }
 
 /* Control Panel (Machine Body) */
@@ -994,7 +1143,7 @@ body {
     text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
 }
 
-.close-button:hover {
+.close-button:hover, .close-button:focus {
     background: 
         linear-gradient(145deg, #FFF700, #FFD700);
     transform: scale(1.03) translateY(-1px);
@@ -1002,16 +1151,26 @@ body {
         0 6px 16px rgba(0,0,0,0.4),
         inset 2px 2px 0px rgba(255,255,255,0.4),
         inset -2px -2px 0px rgba(0,0,0,0.3);
+    outline: 3px solid #FF6B6B;
+    outline-offset: 3px;
 }
 
-/* Admin Panel */
+.close-button:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 
+        0 2px 8px rgba(0,0,0,0.4),
+        inset 2px 2px 0px rgba(255,255,255,0.2),
+        inset -2px -2px 0px rgba(0,0,0,0.4);
+}
+
+/* Admin Panel - webOS TV Optimized */
 .admin-panel {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.95);
     z-index: 2000;
     overflow-y: auto;
 }
@@ -1022,30 +1181,51 @@ body {
     border-radius: 15px;
     min-height: calc(100vh - 40px);
     color: white;
+    /* webOS TV optimizations */
+    font-size: 1.1em;
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    border: 2px solid #FFD700;
 }
 
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 30px;
+    padding: 30px 40px;
     border-bottom: 2px solid #34495e;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+}
+
+.admin-header h2 {
+    font-size: 1.8em;
+    color: #FFD700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
 .close-admin {
     background: #e74c3c;
     color: white;
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    font-size: 1.5em;
+    font-size: 1.8em;
     cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.close-admin:hover, .close-admin:focus {
+    background: #c0392b;
+    transform: scale(1.1);
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
 }
 
 .admin-tabs {
     display: flex;
     background: #34495e;
+    border-bottom: 2px solid #FFD700;
 }
 
 .tab-button {
@@ -1053,95 +1233,196 @@ body {
     background: none;
     color: white;
     border: none;
-    padding: 15px;
+    padding: 20px 15px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
+    font-size: 1.1em;
+    font-weight: bold;
+    position: relative;
+}
+
+.tab-button:hover, .tab-button:focus {
+    background: rgba(255,215,0,0.2);
+    color: #FFD700;
+    outline: 2px solid #FFD700;
+    outline-offset: -2px;
 }
 
 .tab-button.active {
     background: #3498db;
+    color: white;
+    box-shadow: 0 -3px 0 #FFD700 inset;
 }
 
 .tab-content {
     display: none;
-    padding: 30px;
+    padding: 40px;
+    font-size: 1.1em;
 }
 
 .tab-content.active {
     display: block;
 }
 
+/* webOS TV Button Optimizations */
 .add-prize-btn, .save-btn, .reset-btn {
     background: #27ae60;
     color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
+    border: 2px solid #2ecc71;
+    padding: 15px 30px;
+    border-radius: 12px;
     cursor: pointer;
-    margin-bottom: 20px;
-    font-size: 1em;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.add-prize-btn:hover, .add-prize-btn:focus,
+.save-btn:hover, .save-btn:focus,
+.reset-btn:hover, .reset-btn:focus {
+    background: #2ecc71;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
 }
 
 .cancel-btn {
     background: #e74c3c;
     color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
+    border: 2px solid #c0392b;
+    padding: 15px 30px;
+    border-radius: 12px;
     cursor: pointer;
-    margin-left: 10px;
-    font-size: 1em;
+    margin-left: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.cancel-btn:hover, .cancel-btn:focus {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
 }
 
 .prize-editor {
     background: #34495e;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.prize-editor h3 {
+    color: #FFD700;
+    font-size: 1.3em;
     margin-bottom: 20px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 .prize-editor input {
     width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
+    padding: 15px;
+    margin: 12px 0;
+    border: 2px solid #2c3e50;
+    border-radius: 10px;
+    font-size: 1.1em;
+    background: #2c3e50;
+    color: white;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.prize-editor input:focus {
+    outline: none;
+    border-color: #FFD700;
+    box-shadow: 0 0 10px rgba(255,215,0,0.5);
+    background: #34495e;
+}
+
+.prize-editor input::placeholder {
+    color: #bdc3c7;
 }
 
 .prize-card {
     background: #34495e;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 15px;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.prize-card:hover, .prize-card:focus-within {
+    border-color: #FFD700;
+    box-shadow: 0 4px 16px rgba(255,215,0,0.3);
+    transform: translateY(-2px);
 }
 
 .prize-card img {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
+    border: 2px solid #2c3e50;
 }
 
 .prize-info {
     flex: 1;
+    font-size: 1.1em;
+}
+
+.prize-info h4 {
+    color: #FFD700;
+    margin-bottom: 8px;
+    font-size: 1.2em;
+}
+
+.prize-info p {
+    margin: 5px 0;
+    color: #ecf0f1;
 }
 
 .prize-actions button {
     background: #3498db;
     color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
+    border: 2px solid #2980b9;
+    padding: 12px 20px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-left: 10px;
+    margin-left: 15px;
+    font-size: 1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.prize-actions button:hover, .prize-actions button:focus {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    outline: 2px solid #FFD700;
+    outline-offset: 2px;
 }
 
 .prize-actions button.delete {
     background: #e74c3c;
+    border-color: #c0392b;
+}
+
+.prize-actions button.delete:hover, .prize-actions button.delete:focus {
+    background: #c0392b;
 }
 
 /* Inline Prize Editor Styles */
@@ -1685,6 +1966,114 @@ body {
 .preview-content span {
     color: #8EE8D8;
     font-style: italic;
+}
+
+/* webOS TV Settings & Logs Optimization */
+.settings-section, .logs-section {
+    background: #34495e;
+    padding: 30px;
+    border-radius: 12px;
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.settings-section h3, .logs-section h3 {
+    color: #FFD700;
+    font-size: 1.4em;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 10px;
+}
+
+.settings-section p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #ecf0f1;
+    margin-bottom: 25px;
+}
+
+.logs-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid #34495e;
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    color: #ecf0f1;
+}
+
+.logs-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #2c3e50;
+    border-radius: 6px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: #FFD700;
+    border-radius: 6px;
+    border: 2px solid #2c3e50;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: #f39c12;
+}
+
+/* webOS TV Focus Management */
+.admin-panel *:focus {
+    outline: 3px solid #FFD700 !important;
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+/* webOS TV Responsive Adjustments */
+@media (max-width: 1920px) {
+    .admin-content {
+        margin: 15px;
+        font-size: 1em;
+    }
+    
+    .admin-header {
+        padding: 25px 35px;
+    }
+    
+    .tab-content {
+        padding: 35px;
+    }
+}
+
+@media (max-width: 1280px) {
+    .admin-content {
+        margin: 10px;
+        font-size: 0.95em;
+    }
+    
+    .admin-header {
+        padding: 20px 30px;
+    }
+    
+    .admin-header h2 {
+        font-size: 1.6em;
+    }
+    
+    .tab-content {
+        padding: 30px;
+    }
+    
+    .prize-card {
+        padding: 20px;
+        gap: 20px;
+    }
+    
+    .prize-card img {
+        width: 70px;
+        height: 70px;
+    }
 }
 
 .hidden {

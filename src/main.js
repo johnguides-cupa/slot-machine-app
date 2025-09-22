@@ -1,4 +1,4 @@
-// Main entry point for Vite bundling with Asset Preloading
+// webOS-Enhanced Main entry point for Vite bundling with Asset Preloading
 import { assetPreloader } from './assetPreloader.js';
 import { loadingScreen } from './loadingScreen.js';
 import './storage.js';
@@ -7,14 +7,19 @@ import './animations.js';
 import './admin.js';
 import './app.js';
 
-// Initialize the application with asset preloading
+// Initialize the application with webOS-optimized asset preloading
 async function initializeApp() {
-    console.log('🎰 Initializing Slot Machine App...');
+    console.log('🎰 Initializing webOS-Optimized Slot Machine App...');
+    
+    // Log optimization recommendations for developers
+    if (window.assetPreloader && window.assetPreloader.logOptimizationRecommendations) {
+        window.assetPreloader.logOptimizationRecommendations();
+    }
     
     // Show loading screen immediately
     loadingScreen.show();
     
-    // Start asset preloading
+    // Start asset preloading with webOS optimizations
     await assetPreloader.preloadAssets(
         // Progress callback
         (percentage, loaded, total) => {
@@ -22,7 +27,11 @@ async function initializeApp() {
         },
         // Complete callback
         (loadedAssets) => {
-            console.log('✅ All assets preloaded, showing main application');
+            console.log('✅ webOS asset preloading completed');
+            
+            // Log final optimization stats
+            const stats = assetPreloader.getStats();
+            console.log('📊 webOS Loading Stats:', stats);
             
             // Small delay to show 100% completion
             setTimeout(() => {

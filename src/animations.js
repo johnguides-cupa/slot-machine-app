@@ -1,9 +1,101 @@
-// Animation manager using GSAP
+// webOS-Optimized Animation manager using GSAP with performance controls
 class AnimationManager {
     constructor() {
         this.isSpinning = false;
-        this.reelHeight = null; // Will be set dynamically
+        this.reelHeight = null;
         this.idleTimelines = [];
+        
+        // webOS performance controls
+        this.maxConcurrentAnimations = 3;
+        this.activeAnimations = new Set();
+        this.performanceMode = this.detectWebOS();
+        
+        // Initialize GSAP with webOS optimizations
+        this.initializeGSAPOptimizations();
+    }
+
+    // Detect if running on webOS Smart TV
+    detectWebOS() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isWebOS = userAgent.includes('webos') || 
+                       userAgent.includes('netcast') || 
+                       userAgent.includes('smart-tv') ||
+                       userAgent.includes('smarttv');
+        
+        if (isWebOS) {
+            console.log('📺 webOS Smart TV detected - enabling performance mode');
+        }
+        
+        return isWebOS;
+    }
+
+    // Initialize GSAP with webOS-specific optimizations
+    initializeGSAPOptimizations() {
+        if (typeof gsap !== 'undefined') {
+            // Configure GSAP for webOS performance
+            gsap.config({
+                force3D: true,
+                nullTargetWarn: false,
+                trialWarn: false
+            });
+
+            // Set global defaults optimized for Smart TV
+            gsap.defaults({
+                ease: "power1.out", // Simpler easing for better performance
+                force3D: true,
+                lazy: false // Disable lazy rendering for predictable performance
+            });
+
+            // Register performance ticker for monitoring
+            if (this.performanceMode) {
+                gsap.ticker.fps(30); // Limit to 30fps for webOS stability
+                this.setupPerformanceMonitoring();
+            }
+
+            console.log('⚡ GSAP optimized for webOS Smart TV performance');
+        }
+    }
+
+    // Setup performance monitoring
+    setupPerformanceMonitoring() {
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        gsap.ticker.add(() => {
+            frameCount++;
+            const currentTime = performance.now();
+            
+            if (currentTime - lastTime >= 1000) {
+                const fps = Math.round(frameCount);
+                
+                if (fps < 20 && this.activeAnimations.size > 0) {
+                    console.warn(`⚠️ webOS Performance: ${fps} FPS - reducing animation complexity`);
+                    this.reduceAnimationComplexity();
+                }
+                
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+        });
+    }
+
+    // Reduce animation complexity when performance drops
+    reduceAnimationComplexity() {
+        // Kill non-essential animations
+        if (this.activeAnimations.size > this.maxConcurrentAnimations) {
+            console.log('🎛️ Reducing animation complexity for webOS performance');
+            
+            // Keep only the most important animations
+            const animationsArray = Array.from(this.activeAnimations);
+            const toKill = animationsArray.slice(this.maxConcurrentAnimations);
+            
+            toKill.forEach(animation => {
+                if (animation.kill) {
+                    animation.kill();
+                }
+                this.activeAnimations.delete(animation);
+            });
+        }
     }
 
     // Create reel items for animation
@@ -23,9 +115,68 @@ class AnimationManager {
     createReelItem(prize) {
         const item = document.createElement('div');
         item.className = 'reel-item';
-        item.innerHTML = `
-            <img src="${prize.image}" alt="${prize.name}" onerror="this.src='/assets/images/Sad_cat.png'">
-        `;
+        
+        // Add a stable background to prevent white flashing
+        item.style.backgroundColor = '#f0f0f0';
+        item.style.minHeight = '180px'; // Ensure consistent height
+        
+        // Use optimized image creation for webOS performance
+        let img;
+        if (window.assetPreloader && window.assetPreloader.createOptimizedImage) {
+            // Create webOS-optimized image element
+            img = window.assetPreloader.createOptimizedImage(prize.image, 200, 200);
+            img.style.opacity = '1';
+            img.style.backgroundColor = 'transparent';
+        } else {
+            // Fallback: Try to get preloaded image to prevent white flashing
+            const preloadedImg = window.assetPreloader ? window.assetPreloader.getPreloadedImage(prize.image) : null;
+            
+            img = document.createElement('img');
+            if (preloadedImg) {
+                // Use preloaded image data for instant display
+                img.src = preloadedImg.src;
+                img.style.opacity = '1';
+                img.style.backgroundColor = 'transparent';
+            } else {
+                // Fallback to regular loading with stable background
+                img.src = prize.image;
+                img.style.backgroundColor = '#f0f0f0'; // Match item background
+                img.style.opacity = '0.9'; // Slightly transparent until loaded
+            }
+        }
+        
+        img.alt = prize.name;
+        img.loading = 'eager'; // Prioritize loading for better performance
+        img.style.transition = 'opacity 0.1s ease'; // Faster transition
+        
+        // webOS-specific optimizations for smooth animation
+        img.style.willChange = 'transform';
+        img.style.transform = 'translateZ(0)';
+        img.style.backfaceVisibility = 'hidden';
+        img.style.imageRendering = 'auto';
+        
+        // Prevent layout shifts during spinning
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.style.display = 'block';
+        
+        // Handle load and error states for non-optimized images
+        if (!window.assetPreloader || !window.assetPreloader.createOptimizedImage) {
+            img.onload = () => {
+                img.style.opacity = '1';
+                img.style.backgroundColor = 'transparent';
+            };
+        }
+        
+        img.onerror = () => {
+            img.src = '/assets/images/Sad_cat.png';
+            img.style.backgroundColor = 'transparent';
+            img.style.opacity = '1';
+        };
+        
+        item.appendChild(img);
+        
         // Dynamically set reelHeight if not set
         if (!this.reelHeight) {
             document.body.appendChild(item);
@@ -58,7 +209,7 @@ class AnimationManager {
     const reels = Array.from(document.querySelectorAll('.reel .reel-strip'));
         this.idleTimelines = [];
         // Use different intervals for each reel
-        const durations = [6, 7.5, 9]; // You can tweak these for more/less variation
+        const durations = [4, 5, 6]; // Faster durations optimized for webOS TV performance
         reels.forEach((reel, i) => {
             const timeline = gsap.timeline({ repeat: -1 });
             const startY = gsap.getProperty(reel, 'y');
@@ -80,7 +231,7 @@ class AnimationManager {
         this.idleTimelines = [];
     }
 
-    // Spin animation with precise landing
+    // Spin animation with precise landing and anti-flickering optimization
     async spinReels(targetPrize, prizes, slotIcons) {
         if (this.isSpinning) return;
         this.isSpinning = true;
@@ -94,7 +245,13 @@ class AnimationManager {
         }
 
         const reels = Array.from(document.querySelectorAll('.reel .reel-strip'));
+        const reelContainers = Array.from(document.querySelectorAll('.reel'));
         const spinButton = document.getElementById('spinButton');
+
+        // Add spinning classes for optimized rendering during animation
+        reelContainers.forEach(reel => {
+            reel.classList.add('reel-spinning');
+        });
 
         // Disable spin button
         spinButton.disabled = true;
@@ -110,9 +267,9 @@ class AnimationManager {
         }
 
         // For each reel, populate with random icons for suspense, then land on the result icon
-        // Ensure enough icons to fill the reel and always center the winning icon
-        const cycles = 30; // More cycles for extra buffer
-        const bufferBelow = 10; // More buffer below
+        // Optimized for webOS performance - fewer cycles and less complexity
+        const cycles = 15; // Reduced cycles for better performance on TV browsers
+        const bufferBelow = 5; // Reduced buffer for faster rendering
         reels.forEach((reel, i) => {
             reel.innerHTML = '';
             // Fill with suspenseful random icons above
@@ -146,42 +303,129 @@ class AnimationManager {
             return -(finalIndex * this.reelHeight - centerOffset);
         });
 
-        // Seamless slot machine spin: all reels spin in a loop, then each stops in turn
-        const spinSpeed = 0.15;
-        const spinCycles = 15;
-        const staggerDelay = 1.5;
-        const itemsToSpin = this.reelHeight * 10;
+        // Enhanced webOS spinning animation optimizations
+        const spinSpeed = 0.12; // Slightly faster for smoother appearance
+        const spinCycles = 12; // Reduced cycles for better performance
+        const staggerDelay = 1.2; // Faster stagger
+        const itemsToSpin = this.reelHeight * 8; // Reduced items to spin
         const reelLoops = [];
+        
+        // Force maximum GPU acceleration on all reels to prevent flickering
+        reels.forEach(reel => {
+            gsap.set(reel, { 
+                force3D: true,
+                transformPerspective: 1000,
+                backfaceVisibility: "hidden",
+                // Additional webOS optimizations
+                rotationX: 0.01, // Force 3D context
+                rotationY: 0.01,
+                z: 0.01
+            });
+        });
+        
+        // webOS-Optimized spinning with reduced GSAP overhead
         const reelPromises = reels.map((reel, i) => {
             return new Promise(resolve => {
-                const loopTimeline = gsap.timeline({ repeat: -1 });
-                reelLoops[i] = loopTimeline;
-                loopTimeline.to(reel, {
-                    y: `-=${itemsToSpin}`,
-                    duration: spinSpeed,
-                    ease: "none"
-                });
-                setTimeout(() => {
-                    loopTimeline.kill();
-                    gsap.to(reel, {
-                        y: targetPositions[i],
-                        duration: 1.2,
-                        ease: "power3.out",
-                        onComplete: () => {
-                            // Play reel stop sound
-                            if (window.soundManager) {
-                                window.soundManager.onReelStop();
-                            }
-                            resolve();
+                // Track animation for performance monitoring
+                const animationId = `reel-${i}-${Date.now()}`;
+                
+                let loopAnimation;
+                
+                if (this.performanceMode) {
+                    // Use simpler CSS-based loop for webOS
+                    reel.style.transition = 'none';
+                    reel.style.transform = `translateY(${gsap.getProperty(reel, 'y')}px) translateZ(0)`;
+                    
+                    const startY = gsap.getProperty(reel, 'y');
+                    const spinDistance = itemsToSpin;
+                    let currentY = startY;
+                    
+                    const spinLoop = () => {
+                        currentY -= spinDistance;
+                        reel.style.transform = `translateY(${currentY}px) translateZ(0)`;
+                        
+                        if (performance.now() < spinEndTime) {
+                            requestAnimationFrame(spinLoop);
                         }
+                    };
+                    
+                    const spinEndTime = performance.now() + (i * staggerDelay * 1000 + spinCycles * spinSpeed * 1000);
+                    requestAnimationFrame(spinLoop);
+                    
+                    setTimeout(() => {
+                        // Final position with GSAP for precision
+                        const finalTween = gsap.to(reel, {
+                            y: targetPositions[i],
+                            duration: 0.5, // Faster for webOS
+                            ease: "power1.out",
+                            force3D: true,
+                            onComplete: () => {
+                                this.activeAnimations.delete(animationId);
+                                if (window.soundManager) {
+                                    window.soundManager.onReelStop();
+                                }
+                                resolve();
+                            }
+                        });
+                        
+                        this.activeAnimations.add(finalTween);
+                    }, spinEndTime - performance.now());
+                    
+                } else {
+                    // Full GSAP animation for non-webOS
+                    const loopTimeline = gsap.timeline({ 
+                        repeat: -1,
+                        smoothChildTiming: true
                     });
-                }, i * staggerDelay * 1000 + spinCycles * spinSpeed * 1000);
+                    
+                    this.activeAnimations.add(loopTimeline);
+                    loopAnimation = loopTimeline;
+                    
+                    loopTimeline.to(reel, {
+                        y: `-=${itemsToSpin}`,
+                        duration: spinSpeed,
+                        ease: "none",
+                        force3D: true,
+                        transformPerspective: 1000,
+                        rotationX: 0.01,
+                        z: 0.01
+                    });
+                    
+                    setTimeout(() => {
+                        loopTimeline.kill();
+                        this.activeAnimations.delete(loopTimeline);
+                        
+                        const finalTween = gsap.to(reel, {
+                            y: targetPositions[i],
+                            duration: 0.6,
+                            ease: "power1.out",
+                            force3D: true,
+                            transformPerspective: 1000,
+                            rotationX: 0.01,
+                            z: 0.01,
+                            onComplete: () => {
+                                this.activeAnimations.delete(finalTween);
+                                if (window.soundManager) {
+                                    window.soundManager.onReelStop();
+                                }
+                                resolve();
+                            }
+                        });
+                        
+                        this.activeAnimations.add(finalTween);
+                    }, i * staggerDelay * 1000 + spinCycles * spinSpeed * 1000);
+                }
             });
         });
 
         for (let i = 0; i < reelPromises.length; i++) {
             await reelPromises[i];
         }
+
+        // Remove spinning classes to restore visual effects
+        reelContainers.forEach(reel => {
+            reel.classList.remove('reel-spinning');
+        });
 
         // Show prize popup after animation
         setTimeout(() => {
@@ -193,12 +437,7 @@ class AnimationManager {
         spinButton.querySelector('.button-text').textContent = 'SPIN!';
         this.isSpinning = false;
 
-        // After popup is closed, repopulate reels with all prize icons and resume idle animation
-        document.getElementById('closePopup').addEventListener('click', () => {
-            setTimeout(() => {
-                this.populateReels(prizes);
-            }, 400);
-        }, { once: true });
+        console.log('🎰 Spin complete - webOS optimized with anti-flickering');
     }
 
     // Calculate where each reel should stop to show the target prize
@@ -331,57 +570,17 @@ class AnimationManager {
             }
         );
 
-        // Trigger confetti only if not default prize
-        if (!prize.isDefault) {
-            // Delay confetti slightly to not interfere with popup animation
-            setTimeout(() => {
-                this.triggerConfetti();
-            }, 200);
-        }
-    }
-
-    // Confetti celebration
-    triggerConfetti() {
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { 
-            startVelocity: 30, 
-            spread: 360, 
-            ticks: 60, 
-            zIndex: 1001 // Higher than popup background (1000) but lower than popup content
-        };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            const particleCount = 50 * (timeLeft / duration);
-
-            confetti(Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-            }));
-            confetti(Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-            }));
-        }, 250);
+        // No confetti for webOS optimization - confetti causes performance issues on TV browsers
+        console.log('🎰 Prize popup shown - confetti disabled for webOS performance');
     }
 
     // Close popup animation
     closePrizePopup() {
         const popup = document.getElementById('prizePopup');
         
-        // Stop any playing custom sounds when closing popup
-        if (window.soundManager) {
-            window.soundManager.stopCustomSounds();
+        // Stop all playing sounds when closing popup
+        if (window.soundManager && window.soundManager.stopAllSounds) {
+            window.soundManager.stopAllSounds();
         }
         
         // Force hardware acceleration
@@ -401,8 +600,16 @@ class AnimationManager {
                 if (window.slotMachine && window.slotMachine.updatePrizeDisplay) {
                     window.slotMachine.updatePrizeDisplay();
                 }
+                
+                // Repopulate reels after popup closes
+                setTimeout(() => {
+                    const prizes = window.storageManager ? window.storageManager.getPrizes() : [];
+                    this.populateReels(prizes);
+                }, 100);
             }
         });
+        
+        console.log('🎰 Prize popup closed - webOS optimized');
     }
 
     // Animate prize showcase

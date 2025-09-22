@@ -250,10 +250,15 @@ class SoundManager {
         this.updateVolumeSlider();
     }
 
-    // Create volume control UI
+    // Create volume control UI at bottom of page
     createVolumeControl() {
-        const controlPanel = document.querySelector('.control-panel');
-        if (!controlPanel) return;
+        // Create bottom controls container
+        let bottomControls = document.querySelector('.bottom-controls');
+        if (!bottomControls) {
+            bottomControls = document.createElement('div');
+            bottomControls.className = 'bottom-controls';
+            document.body.appendChild(bottomControls);
+        }
 
         const soundControl = document.createElement('div');
         soundControl.className = 'sound-control';
@@ -271,11 +276,19 @@ class SoundManager {
             </div>
         `;
 
-        // Add styles
+        // Add styles for bottom controls
         const style = document.createElement('style');
         style.textContent = `
+            .bottom-controls {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 15px;
+                margin-top: 30px;
+                padding: 20px;
+            }
+            
             .sound-control {
-                margin-top: 15px;
                 display: flex;
                 justify-content: center;
             }
@@ -284,10 +297,31 @@ class SoundManager {
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                background: rgba(0,0,0,0.3);
-                padding: 10px;
-                border-radius: 8px;
+                background: rgba(0,0,0,0.8);
+                padding: 12px 16px;
+                border-radius: 25px;
                 border: 2px solid #FFD700;
+                backdrop-filter: blur(5px);
+            }
+
+            .admin-button {
+                background: rgba(0,0,0,0.8);
+                border: 2px solid #FFD700;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(5px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .admin-button:hover {
+                background: rgba(255,215,0,0.2);
+                transform: scale(1.1);
             }
             
             .mute-button {
@@ -298,6 +332,7 @@ class SoundManager {
                 padding: 5px;
                 border-radius: 4px;
                 transition: all 0.2s ease;
+                color: white;
             }
             
             .mute-button:hover {
@@ -316,6 +351,7 @@ class SoundManager {
                 padding: 5px;
                 border-radius: 4px;
                 transition: all 0.2s ease;
+                color: white;
             }
             
             .test-sound-button:hover {
@@ -357,10 +393,68 @@ class SoundManager {
                 text-align: center;
                 font-size: 0.9em;
             }
+
+            @media (max-width: 768px) {
+                .bottom-controls {
+                    margin-top: 20px;
+                    padding: 15px;
+                    gap: 12px;
+                }
+
+                .sound-controls {
+                    padding: 10px 12px;
+                    gap: 8px;
+                }
+
+                .admin-button {
+                    width: 45px;
+                    height: 45px;
+                    font-size: 1.3em;
+                }
+
+                .volume-slider {
+                    width: 80px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .bottom-controls {
+                    margin-top: 15px;
+                    padding: 12px;
+                    gap: 10px;
+                }
+
+                .sound-controls {
+                    padding: 8px 10px;
+                    gap: 6px;
+                }
+
+                .volume-slider {
+                    width: 60px;
+                }
+
+                .admin-button {
+                    width: 40px;
+                    height: 40px;
+                    font-size: 1.2em;
+                }
+            }
         `;
         document.head.appendChild(style);
 
-        controlPanel.appendChild(soundControl);
+        // Add admin button to bottom controls
+        const adminButton = document.createElement('button');
+        adminButton.className = 'admin-button';
+        adminButton.title = 'Admin Access';
+        adminButton.innerHTML = '🤫'; // Hush emoji
+        adminButton.addEventListener('click', () => {
+            if (window.showAdminLogin) {
+                window.showAdminLogin();
+            }
+        });
+
+        bottomControls.appendChild(soundControl);
+        bottomControls.appendChild(adminButton);
 
         // Add event listeners
         document.getElementById('muteButton').addEventListener('click', () => {

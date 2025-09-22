@@ -93,7 +93,7 @@ class SlotMachine {
             }
             
             prizeItem.innerHTML = `
-                <img src="${prize.image}" alt="${prize.name}" onerror="this.src='https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png'">
+                <img src="${prize.image}" alt="${prize.name}" onerror="this.src='/assets/images/Sad_cat.png'">
                 <span>${prize.name}</span>
                 ${prize.quantity === 0 ? '<div class="out-of-stock-overlay"><div class="x-mark">X</div></div>' : ''}
             `;

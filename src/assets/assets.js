@@ -37,6 +37,31 @@ export const PRIZE_ASSETS = [
   }
 ];
 
+// Special app images (not prizes but used throughout the app)
+export const APP_IMAGES = {
+  sadCat: {
+    id: 'sad-cat',
+    name: 'Sad Cat',
+    filename: 'Sad_cat.png',
+    path: './assets/images/Sad_cat.png',
+    description: 'Default fallback image for failed loads'
+  },
+  winnerCat: {
+    id: 'winner-cat',
+    name: 'Winner Cat',
+    filename: 'cat_win.png',
+    path: './assets/images/cat_win.png',
+    description: 'Victory celebration image'
+  },
+  logo: {
+    id: 'pursuing-potential-header',
+    name: 'Pursuing Potential Header Logo',
+    filename: 'Pursuing Potential Logo.png',
+    path: './assets/images/Pursuing Potential Logo.png',
+    description: 'Main header logo'
+  }
+};
+
 // Helper function to get asset URL for Vite
 export const getAssetUrl = (filename) => {
   // URL encode the filename to handle spaces

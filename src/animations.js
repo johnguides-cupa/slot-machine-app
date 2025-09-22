@@ -24,7 +24,7 @@ class AnimationManager {
         const item = document.createElement('div');
         item.className = 'reel-item';
         item.innerHTML = `
-            <img src="${prize.image}" alt="${prize.name}" onerror="this.src='https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png'">
+            <img src="${prize.image}" alt="${prize.name}" onerror="this.src='/assets/images/Sad_cat.png'">
         `;
         // Dynamically set reelHeight if not set
         if (!this.reelHeight) {
@@ -276,8 +276,7 @@ class AnimationManager {
         if (prize.isDefault) {
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
             if (prizeShield) {
-                // Replace emoji with sad cat image using same pattern as prize images
-                prizeShield.innerHTML = `<img src="./assets/images/Sad_cat.png" alt="Sad Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='https://static.vecteezy.com/system/resources/previews/019/040/585/non_2x/an-8-bit-retro-styled-pixel-art-illustration-of-chocolate-free-png.png'">`;
+                prizeShield.innerHTML = `<img src="/assets/images/Sad_cat.png" alt="Sad Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/Sad_cat.png'">`;
             }
             
             // Play custom miaw sound with slight delay to not interfere with animation
@@ -289,8 +288,7 @@ class AnimationManager {
         } else {
             if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
             if (prizeShield) {
-                // Replace trophy emoji with cat_win image
-                prizeShield.innerHTML = `<img src="./assets/images/cat_win.png" alt="Winner Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.textContent='🏆'">`;
+                prizeShield.innerHTML = `<img src="/assets/images/cat_win.png" alt="Winner Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/cat_win.png'">`;
             }
             
             // Play custom congratulations sound with slight delay to not interfere with animation

@@ -101,6 +101,12 @@ body {
     gap: clamp(10px, 2vh, 30px); /* Responsive gap between elements */
 }
 
+/* Initially hide the main app until assets are loaded */
+.slot-machine-cabinet {
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+}
+
 /* Machine Title (Standalone Vegas-style Marquee) */
 .machine-title {
     position: relative;

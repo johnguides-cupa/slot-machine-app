@@ -6,9 +6,51 @@ class SlotMachine {
         this.cachedAvailablePrizes = null;
         this.cachedTotalChance = null;
         this.lastPrizeUpdate = 0;
+        this.preloadedAssets = null; // Store preloaded assets
         
         this.initialize();
         this.setupEventListeners();
+    }
+
+    // Called when assets are preloaded
+    onAssetsLoaded(loadedAssets) {
+        this.preloadedAssets = loadedAssets;
+        console.log('✅ Slot machine received preloaded assets:', loadedAssets.size);
+        
+        // Refresh displays with preloaded images
+        this.updatePrizeDisplay();
+        this.populateReels();
+        
+        // Preload any dynamic images that might be used
+        this.optimizeImageLoading();
+    }
+
+    // Optimize image loading by using preloaded assets
+    optimizeImageLoading() {
+        // Find all images in the DOM and replace with preloaded versions if available
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            const preloadedImage = this.getPreloadedImage(img.src);
+            if (preloadedImage) {
+                // Use the preloaded image data
+                img.src = preloadedImage.src;
+                img.style.opacity = '1';
+                img.style.transition = 'opacity 0.3s ease';
+            }
+        });
+    }
+
+    // Get preloaded image if available
+    getPreloadedImage(src) {
+        if (!this.preloadedAssets) return null;
+        
+        // Try to find matching preloaded asset
+        for (let [url, asset] of this.preloadedAssets) {
+            if (url === src || url.includes(src) || src.includes(url)) {
+                return asset.element;
+            }
+        }
+        return null;
     }
 
     initialize() {

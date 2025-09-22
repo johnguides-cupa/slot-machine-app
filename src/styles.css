@@ -478,16 +478,16 @@ body {
         inset 0 -2px 4px rgba(255, 255, 255, 0.1); /* Bottom highlight */
 }
 
-/* Decorative arrows pointing to slot machine */
+/* Arrows positioned relative to first and third reels using percentages */
 .slot-container::before {
     content: '▶';
     position: absolute;
     top: 55%;
-    left: 44px; /* Position relative to container */
+    left: 42px; /* Moved closer to the first reel */
     transform: translateY(-50%);
     font-size: 35px;
     color: #F49E06;
-    z-index: 20;
+    z-index: 25;
     pointer-events: none;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
@@ -496,13 +496,28 @@ body {
     content: '◀';
     position: absolute;
     top: 55%;
-    right: 44px; /* Position relative to container */
+    right: 40px; /* Moved closer to the third reel */
     transform: translateY(-50%);
     font-size: 35px;
     color: #F49E06;
-    z-index: 20;
+    z-index: 25;
     pointer-events: none;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Original decorative elements restored */
+.slot-machine::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 55%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 20px;
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    border-radius: 10px;
+    border: 2px solid #FF6B6B;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .slot-machine {
@@ -584,7 +599,7 @@ body {
 
 .reel {
     width: 228px; /* Back to the working size */
-    height: 385px; /* Back to the working size */
+    height: 420px; /* Expanded from 385px for more height */
     background: 
         linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%);
     /* More pronounced cylindrical border radius */
@@ -659,7 +674,7 @@ body {
 
 .reel-item {
     width: 100%;
-    height: 170px; /* Back to original height */
+    height: 180px; /* Decreased from 200px to 180px */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -680,14 +695,16 @@ body {
 }
 
 .reel-item img {
-    width: 120px; /* Reverted back to original size */
-    height: 120px; /* Reverted back to original size */
-    object-fit: contain; /* Preserve aspect ratio and prevent distortion */
-    border-radius: 8px; /* Back to original proportional radius */
-    margin-bottom: 6px; /* Back to original margin */
-    background: rgba(255,255,255,0.95); /* Keep the improved background */
-    padding: 4px; /* Back to original padding */
-    border: 3px solid #666; /* Keep original border */
+    width: 100%; /* Fill the entire width */
+    height: 100%; /* Fill the entire height */
+    max-width: none; /* Remove any max-width constraints */
+    max-height: none; /* Remove any max-height constraints */
+    object-fit: contain; /* Show entire image without cropping, fit within the area */
+    border-radius: 0; /* Remove border radius */
+    margin: 0; /* Remove all margins */
+    background: transparent; /* Remove background */
+    padding: 0; /* Remove padding */
+    border: none; /* Remove border completely */
     box-shadow: 
         inset 2px 2px 0px rgba(255,255,255,0.5), /* Original white highlight */
         inset -2px -2px 0px rgba(0,0,0,0.3), /* Original black shadow */
@@ -1431,14 +1448,17 @@ body {
     }
     
     .reel-item {
-        height: 95px; /* Increased from 75px */
+        height: 100px; /* Decreased from 110px to 100px for mobile */
     }
     
     .reel-item img {
-        width: 60px; /* Back to original mobile size */
-        height: 60px; /* Back to original mobile size */
-        padding: 2px; /* Back to original padding */
-        border-radius: 4px; /* Back to proportional border radius */
+        width: 100%; /* Fill the entire width on mobile */
+        height: 100%; /* Fill the entire height on mobile */
+        padding: 0; /* Remove padding on mobile */
+        border-radius: 0; /* Remove border radius on mobile */
+        border: none; /* Remove border on mobile */
+        margin: 0; /* Remove margin on mobile */
+        background: transparent; /* Remove background on mobile */
         /* Maintain image quality on mobile */
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
@@ -1479,10 +1499,13 @@ body {
     }
     
     .reel-item img {
-        width: 50px; /* Back to original tablet size */
-        height: 50px; /* Back to original tablet size */
-        padding: 2px; /* Back to original padding */
-        border-radius: 4px; /* Back to proportional border radius */
+        width: 100%; /* Fill the entire width on tablet */
+        height: 100%; /* Fill the entire height on tablet */
+        padding: 0; /* Remove padding on tablet */
+        border-radius: 0; /* Remove border radius on tablet */
+        border: none; /* Remove border on tablet */
+        margin: 0; /* Remove margin on tablet */
+        background: transparent; /* Remove background on tablet */
         /* Maintain image quality on tablets */
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;

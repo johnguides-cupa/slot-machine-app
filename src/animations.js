@@ -130,7 +130,7 @@ class AnimationManager {
             // Center the winning icon
             const visibleCount = Math.floor(reel.parentNode.offsetHeight / this.reelHeight);
             // Adjust centerOffset to align with winning box position 
-            // Winning box is at 50% + 20px, and reel-item height is 154px
+            // Winning box is at 50% + 7px, and reel-item height is now 180px
             const centerOffset = this.reelHeight * Math.floor(visibleCount / 2) - 30;
             gsap.set(reel, { y: -(cycles * this.reelHeight - centerOffset) });
         });
@@ -141,7 +141,7 @@ class AnimationManager {
             const finalIndex = cycles;
             const visibleCount = Math.floor(reel.parentNode.offsetHeight / this.reelHeight);
             // Adjust centerOffset to align with winning box position
-            // Winning box is at 50% + 20px, and reel-item height is 154px
+            // Winning box is at 50% + 7px, and reel-item height is now 180px
             const centerOffset = this.reelHeight * Math.floor(visibleCount / 2) - 30;
             return -(finalIndex * this.reelHeight - centerOffset);
         });

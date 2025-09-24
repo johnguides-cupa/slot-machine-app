@@ -88,8 +88,8 @@ class SoundManager {
     // Preload only essential sounds for performance mode
     preloadEssentialSounds() {
         // Only preload the most important sounds
-        const essentialSounds = ['congratulations', 'miaw'];
-        
+        const essentialSounds = ['congratulations', 'miaw', 'happy'];
+
         Object.keys(this.customSounds).forEach(key => {
             if (!essentialSounds.includes(key)) {
                 // Pause and reset non-essential sounds
@@ -113,7 +113,7 @@ class SoundManager {
             }
             
             // Don't overlap custom sounds in performance mode
-            if (this.isPlayingCustomSound && (soundType === 'congratulations' || soundType === 'miaw')) {
+            if (this.isPlayingCustomSound && (soundType === 'congratulations' || soundType === 'miaw' || soundType === 'happy')) {
                 return false;
             }
         }
@@ -178,6 +178,18 @@ class SoundManager {
         
         this.customSounds.miaw = miawAudio;
 
+        // Load happy happy happy sound with performance settings
+        const happyAudio = new Audio('./assets/sounds/Happy Happy Happy.mp3');
+        happyAudio.volume = this.volume;
+        
+        if (this.performanceMode === 'performance') {
+            happyAudio.preload = 'metadata';
+        } else {
+            happyAudio.preload = 'auto';
+        }
+        
+        this.customSounds.happy = happyAudio;
+
         // Handle loading errors gracefully
         congratsAudio.addEventListener('error', () => {
             console.warn('Could not load congratulations sound');
@@ -187,12 +199,20 @@ class SoundManager {
             console.warn('Could not load miaw sound');
         });
 
+        happyAudio.addEventListener('error', () => {
+            console.warn('Could not load happy happy happy sound');
+        });
+
         // Add event listeners for performance mode tracking
         congratsAudio.addEventListener('ended', () => {
             this.isPlayingCustomSound = false;
         });
 
         miawAudio.addEventListener('ended', () => {
+            this.isPlayingCustomSound = false;
+        });
+
+        happyAudio.addEventListener('ended', () => {
             this.isPlayingCustomSound = false;
         });
     }
@@ -847,6 +867,11 @@ class SoundManager {
     // Play miaw sound for popup losses (default prize)
     onPopupLose() {
         this.playCustomSound('miaw');
+    }
+
+    // Play happy happy happy sound for special wins (medium tier prizes)
+    onPopupHappy() {
+        this.playCustomSound('happy');
     }
 
     // Play custom MP3 sounds with performance mode support

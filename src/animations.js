@@ -352,6 +352,25 @@ class AnimationManager {
         });
     }
 
+    // Determine prize type based on win chance and default status
+    determinePrizeType(prize, allPrizes) {
+        if (prize.isDefault) {
+            return 'consolation';
+        }
+        
+        // Get all non-default prizes and sort by chance (ascending)
+        const nonDefaultPrizes = allPrizes.filter(p => !p.isDefault);
+        nonDefaultPrizes.sort((a, b) => a.chance - b.chance);
+        
+        // If this is the lowest chance (grand prize)
+        if (nonDefaultPrizes.length > 0 && prize.id === nonDefaultPrizes[0].id) {
+            return 'grandPrize';
+        }
+        
+        // Otherwise it's a medium tier prize
+        return 'mediumPrize';
+    }
+
     // Show prize won popup with celebration
     showPrizePopup(prize) {
         const popup = document.getElementById('prizePopup');
@@ -359,6 +378,10 @@ class AnimationManager {
         const prizeName = document.getElementById('wonPrizeName');
         const prizeTitle = document.getElementById('prizePopupTitle');
         const prizeShield = popup.querySelector('.prize-shield');
+
+        // Get all prizes to determine prize type
+        const allPrizes = window.storageManager ? window.storageManager.getPrizes() : [];
+        const prizeType = this.determinePrizeType(prize, allPrizes);
 
         // Pre-load image to prevent lag during animation
         const img = new Image();
@@ -373,8 +396,9 @@ class AnimationManager {
         gsap.set(popup, { force3D: true });
         gsap.set(popup.querySelector('.popup-content'), { force3D: true });
 
-        // If prize is default, show 'Better luck next time' and sad cat image, else 'Congratulations' and trophy
-        if (prize.isDefault) {
+        // Handle different prize types with appropriate images and sounds
+        if (prizeType === 'consolation') {
+            // Default/consolation prize - show sad cat and play miaw
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
             if (prizeShield) {
                 prizeShield.innerHTML = `<img src="/assets/images/Sad_cat.png" alt="Sad Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/Sad_cat.png'">`;
@@ -386,8 +410,9 @@ class AnimationManager {
                     window.soundManager.onPopupLose();
                 }
             }, 100);
-        } else {
-            if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
+        } else if (prizeType === 'grandPrize') {
+            // Grand prize (lowest win chance) - show winner cat and play congratulations
+            if (prizeTitle) prizeTitle.textContent = 'GRAND PRIZE!';
             if (prizeShield) {
                 prizeShield.innerHTML = `<img src="/assets/images/cat_win.png" alt="Winner Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/cat_win.png'">`;
             }
@@ -396,6 +421,19 @@ class AnimationManager {
             setTimeout(() => {
                 if (window.soundManager) {
                     window.soundManager.onPopupWin();
+                }
+            }, 100);
+        } else if (prizeType === 'mediumPrize') {
+            // Medium tier prizes - show happy cat gif and play happy sound
+            if (prizeTitle) prizeTitle.textContent = 'Congratulations!';
+            if (prizeShield) {
+                prizeShield.innerHTML = `<img src="/assets/images/Happy cat.gif" alt="Happy Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/Happy cat.gif'">`;
+            }
+            
+            // Play custom happy happy happy sound with slight delay to not interfere with animation
+            setTimeout(() => {
+                if (window.soundManager) {
+                    window.soundManager.onPopupHappy();
                 }
             }, 100);
         }
@@ -411,7 +449,7 @@ class AnimationManager {
             gsap.fromTo(popup.querySelector('.popup-content'), 
                 { 
                     scale: 0, 
-                    rotation: prize.isDefault ? 10 : -10, // Slight variation for lose vs win
+                    rotation: prizeType === 'consolation' ? 10 : -10, // Slight variation for lose vs win
                     opacity: 0
                 },
                 { 
@@ -423,7 +461,7 @@ class AnimationManager {
                     force3D: true,
                     onComplete: () => {
                         // Add a subtle pulse effect for "better luck next time"
-                        if (prize.isDefault && this.performanceMode === 'high-quality') {
+                        if (prizeType === 'consolation' && this.performanceMode === 'high-quality') {
                             gsap.to(popup.querySelector('.popup-content'), {
                                 scale: 1.02,
                                 duration: 0.3,
@@ -449,15 +487,15 @@ class AnimationManager {
             );
         }
 
-        // Trigger confetti only if not default prize and confetti is enabled
-        if (!prize.isDefault && settings.enableConfetti) {
-            console.log(`🎊 Triggering confetti - Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
+        // Trigger confetti only if not consolation prize and confetti is enabled
+        if (prizeType !== 'consolation' && settings.enableConfetti) {
+            console.log(`🎊 Triggering confetti - Prize Type: ${prizeType}, Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
             // Delay confetti slightly to not interfere with popup animation
             setTimeout(() => {
                 this.triggerConfetti();
             }, 200);
         } else {
-            console.log(`🚫 Confetti skipped - Default prize: ${prize.isDefault}, Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
+            console.log(`🚫 Confetti skipped - Prize Type: ${prizeType}, Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
         }
     }
 

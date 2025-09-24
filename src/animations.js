@@ -85,21 +85,21 @@ class AnimationManager {
             spinEase: "none", // Keep linear for both modes for consistent feel
             stopDuration: isPerformanceMode ? 0.6 : 1.0, // Faster stops in performance mode
             stopEase: isPerformanceMode ? "power2.out" : "power2.out", // Same easing, just faster
-            
+
             // Prize popup settings - minimal differences
             popupScale: true, // Keep scaling for both modes
             popupDuration: isPerformanceMode ? 0.3 : 0.4, // Slightly faster popup in performance mode
             popupEase: isPerformanceMode ? "back.out(1.2)" : "back.out(1.7)", // Less bounce in performance mode
-            
-            // Confetti settings - major performance impact
-            enableConfetti: !isPerformanceMode, // Disable confetti in performance mode only
-            confettiAmount: isPerformanceMode ? 25 : 50, // Fewer particles in performance mode
-            confettiInterval: isPerformanceMode ? 500 : 150, // Less frequent in performance mode
-            confettiMultiplier: isPerformanceMode ? 1 : 2, // No doubling in performance mode
-            
+
+            // Confetti settings - REDUCED for all modes
+            enableConfetti: true, // Always allow, but minimal
+            confettiAmount: 4, // Minimal visible particles
+            confettiInterval: 400, // Moderate frequency for visibility
+            confettiMultiplier: 1, // No doubling
+
             // Idle animations
             enableIdleAnimations: !isPerformanceMode, // Disable idle animations in performance mode
-            
+
             // Performance optimizations (these are the real improvements)
             enableGPUAcceleration: isPerformanceMode, // Enable GPU acceleration in performance mode
             reduceAnimationComplexity: isPerformanceMode // Simplify animations in performance mode
@@ -466,17 +466,16 @@ class AnimationManager {
         const settings = this.getAnimationSettings();
         console.log(`🎊 triggerConfetti() called - Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
         
-        const duration = settings.enableConfetti ? 3000 : 0; // Use settings-based control
+        const duration = settings.enableConfetti ? 1500 : 0; // Slightly longer for better visibility
         const animationEnd = Date.now() + duration;
         const defaults = { 
-            startVelocity: 30, 
-            spread: 360, 
-            ticks: settings.enableConfetti ? 100 : 0, // Performance-based ticks
-            zIndex: 1001, // Higher than popup background (1000) but lower than popup content
-            particleCount: settings.confettiAmount || 50
-        };
-
-        if (!settings.enableConfetti) {
+            startVelocity: 25, 
+            spread: 270, // Narrower spread for better visibility
+            ticks: settings.enableConfetti ? 80 : 0, // Reduced ticks for performance
+            zIndex: 10000, // Very high z-index to appear on top of modal
+            particleCount: settings.confettiAmount || 4,
+            colors: ['#FFD700', '#FF6347', '#32CD32', '#FF69B4', '#00CED1'] // Brighter colors for visibility
+        };        if (!settings.enableConfetti) {
             console.log('⚡ Confetti disabled in performance mode - RETURNING EARLY');
             return; // Skip confetti entirely when disabled
         }
@@ -497,23 +496,25 @@ class AnimationManager {
             const particleCount = settings.confettiAmount * (timeLeft / duration);
             const multiplier = settings.confettiMultiplier || 1;
 
-            // Performance-aware confetti bursts
+            // Performance-aware confetti bursts - from modal edges
             confetti(Object.assign({}, defaults, {
                 particleCount: particleCount * multiplier,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                origin: { x: 0.35, y: 0.35 } // Top-left edge of modal
             }));
             confetti(Object.assign({}, defaults, {
                 particleCount: particleCount * multiplier,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                origin: { x: 0.65, y: 0.35 } // Top-right edge of modal
             }));
             
-            // Center burst only in high quality mode (when multiplier > 1)
-            if (settings.confettiMultiplier > 1) {
-                confetti(Object.assign({}, defaults, {
-                    particleCount: particleCount,
-                    origin: { x: 0.5, y: 0.5 }
-                }));
-            }
+            // Additional bursts from bottom edges
+            confetti(Object.assign({}, defaults, {
+                particleCount: particleCount,
+                origin: { x: 0.35, y: 0.55 } // Bottom-left edge of modal
+            }));
+            confetti(Object.assign({}, defaults, {
+                particleCount: particleCount,
+                origin: { x: 0.65, y: 0.55 } // Bottom-right edge of modal
+            }));
         }, settings.confettiInterval || 150); // Use performance-aware interval
     }
 

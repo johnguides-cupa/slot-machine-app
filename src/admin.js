@@ -1374,14 +1374,15 @@ class AdminPanel {
             return;
         }
 
-        logs.forEach(log => {
+        logs.forEach((log, index) => {
             const logEntry = document.createElement('div');
             logEntry.className = 'log-entry';
             const date = new Date(log.timestamp).toLocaleString();
+            const spinNumber = logs.length - index; // Reverse numbering so newest spin has highest number
             logEntry.innerHTML = `
                 <strong>${date}</strong><br>
-                Prize: ${log.prizeName}<br>
-                Mode: ${log.gameMode}
+                Spin #${spinNumber}<br>
+                Prize: ${log.prizeName}
                 ${log.gameMode === 'duration' ? `<br>Remaining in deck: ${log.remainingInDeck}` : ''}
             `;
             container.appendChild(logEntry);

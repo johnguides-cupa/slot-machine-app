@@ -95,7 +95,13 @@ class SlotMachine {
         // Keyboard shortcuts with debouncing
         let keyboardCooldown = false;
         document.addEventListener('keydown', (e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && !keyboardCooldown && !animationManager.isSpinning) {
+            // Check if popup is visible or spin button is disabled
+            const popup = document.getElementById('prizePopup');
+            const spinButton = document.getElementById('spinButton');
+            const isPopupVisible = popup && !popup.classList.contains('hidden');
+            const isSpinButtonDisabled = spinButton && spinButton.disabled;
+            
+            if ((e.key === 'Enter' || e.key === ' ') && !keyboardCooldown && !animationManager.isSpinning && !isPopupVisible && !isSpinButtonDisabled) {
                 e.preventDefault();
                 keyboardCooldown = true;
                 setTimeout(() => keyboardCooldown = false, 300);

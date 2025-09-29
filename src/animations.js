@@ -91,11 +91,11 @@ class AnimationManager {
             popupDuration: isPerformanceMode ? 0.3 : 0.4, // Slightly faster popup in performance mode
             popupEase: isPerformanceMode ? "back.out(1.2)" : "back.out(1.7)", // Less bounce in performance mode
 
-            // Confetti settings - REDUCED for all modes
-            enableConfetti: true, // Always allow, but minimal
-            confettiAmount: 4, // Minimal visible particles
-            confettiInterval: 400, // Moderate frequency for visibility
-            confettiMultiplier: 1, // No doubling
+            // Confetti settings - MORE VISIBLE and lively (only in high-quality mode)
+            enableConfetti: !isPerformanceMode, // Disable confetti in performance mode
+            confettiAmount: 7, // More particles for visibility
+            confettiInterval: 200, // Faster frequency for more bursts
+            confettiMultiplier: 2, // More confetti per burst
 
             // Idle animations
             enableIdleAnimations: !isPerformanceMode, // Disable idle animations in performance mode
@@ -390,7 +390,12 @@ class AnimationManager {
         };
         img.src = prize.image;
 
-        prizeName.textContent = prize.name;
+        // Set prize name text - add "You won" prefix for non-consolation prizes
+        if (prizeType === 'consolation') {
+            prizeName.textContent = prize.name; // Keep original name for consolation
+        } else {
+            prizeName.textContent = `You won ${prize.name}!`; // Add "You won" for winning prizes
+        }
 
         // Force hardware acceleration before animation (moved up for both types)
         gsap.set(popup, { force3D: true });
@@ -398,10 +403,10 @@ class AnimationManager {
 
         // Handle different prize types with appropriate images and sounds
         if (prizeType === 'consolation') {
-            // Default/consolation prize - show sad cat and play miaw
+            // Default/consolation prize - show crying cat and play miaw
             if (prizeTitle) prizeTitle.textContent = 'Better luck next time!';
             if (prizeShield) {
-                prizeShield.innerHTML = `<img src="/assets/images/Sad_cat.png" alt="Sad Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/Sad_cat.png'">`;
+                prizeShield.innerHTML = `<img src="/assets/images/cat-crying.gif" alt="Crying Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/cat-crying.gif'">`;
             }
             
             // Play custom miaw sound with slight delay to not interfere with animation
@@ -411,10 +416,9 @@ class AnimationManager {
                 }
             }, 100);
         } else if (prizeType === 'grandPrize') {
-            // Grand prize (lowest win chance) - show winner cat and play congratulations
-            if (prizeTitle) prizeTitle.textContent = 'GRAND PRIZE!';
+            // Grand prize (lowest win chance) - show dancing cat and play congratulations
             if (prizeShield) {
-                prizeShield.innerHTML = `<img src="/assets/images/cat_win.png" alt="Winner Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/cat_win.png'">`;
+                prizeShield.innerHTML = `<img src="/assets/images/dancing-cat.gif" alt="Dancing Cat" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px;" onerror="this.src='/slot-machine-app/assets/images/dancing-cat.gif'">`;
             }
             
             // Play custom congratulations sound with slight delay to not interfere with animation
@@ -504,16 +508,15 @@ class AnimationManager {
         const settings = this.getAnimationSettings();
         console.log(`🎊 triggerConfetti() called - Mode: ${this.performanceMode}, EnableConfetti: ${settings.enableConfetti}`);
         
-        const duration = settings.enableConfetti ? 1500 : 0; // Slightly longer for better visibility
+        const duration = settings.enableConfetti ? 1500 : 0; // Longer duration for more visible confetti
         const animationEnd = Date.now() + duration;
         const defaults = { 
-            startVelocity: 25, 
-            spread: 270, // Narrower spread for better visibility
-            ticks: settings.enableConfetti ? 80 : 0, // Reduced ticks for performance
-            zIndex: 10000, // Very high z-index to appear on top of modal
-            particleCount: settings.confettiAmount || 4,
-            colors: ['#FFD700', '#FF6347', '#32CD32', '#FF69B4', '#00CED1'] // Brighter colors for visibility
-        };        if (!settings.enableConfetti) {
+            startVelocity: 45, 
+            spread: 420, 
+            ticks: 90, 
+            zIndex: 2000 // Ensure confetti is always above modal popup
+        };
+        if (!settings.enableConfetti) {
             console.log('⚡ Confetti disabled in performance mode - RETURNING EARLY');
             return; // Skip confetti entirely when disabled
         }

@@ -3,8 +3,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booth Slot Machine</title>
-  <script type="module" crossorigin src="/slot-machine-app/assets/index-BTntEXdn.js"></script>
-  <link rel="stylesheet" crossorigin href="/slot-machine-app/assets/index-BUAcbsjX.css">
+  <script type="module" crossorigin src="/slot-machine-app/assets/index-CuO-_CR-.js"></script>
+  <link rel="stylesheet" crossorigin href="/slot-machine-app/assets/index-jOX1sOcN.css">
 </head>
 <body>
     <!-- Header Logo -->
@@ -68,6 +68,19 @@
         </div>
     </div>
 
+    <!-- Admin Confirmation Modal -->
+    <div id="adminConfirmModal" class="admin-confirm-modal hidden">
+        <div class="admin-confirm-content">
+            <div class="admin-confirm-icon">🔐</div>
+            <h2>Admin Access</h2>
+            <p>Are you really an admin?</p>
+            <div class="admin-confirm-buttons">
+                <button id="adminConfirmYes" class="admin-btn admin-btn-yes">Yes</button>
+                <button id="adminConfirmNo" class="admin-btn admin-btn-no">No</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-content">
@@ -89,7 +102,11 @@
                         <h3 id="editorTitle">Add New Prize</h3>
                         <input type="text" id="prizeName" placeholder="Prize Name">
                         <input type="url" id="prizeImage" placeholder="Image URL">
-                        <input type="number" id="prizeQuantity" placeholder="Quantity" min="0">
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn minus-btn" data-target="prizeQuantity">−</button>
+                            <input type="number" id="prizeQuantity" placeholder="Quantity" min="0" value="0">
+                            <button type="button" class="quantity-btn plus-btn" data-target="prizeQuantity">+</button>
+                        </div>
                         <input type="number" id="prizeChance" placeholder="Win Chance %" min="0" max="100" step="0.1">
                         <div class="editor-buttons">
                             <button id="savePrize" class="save-btn">Save</button>

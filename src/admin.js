@@ -70,6 +70,14 @@ class AdminPanel {
                 this.resetGame();
             }
         });
+
+        // Quantity control event listeners using delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('quantity-btn')) {
+                if (window.soundManager) window.soundManager.onButtonClick();
+                this.handleQuantityChange(e.target);
+            }
+        });
     }
 
     show() {
@@ -872,7 +880,11 @@ class AdminPanel {
                 </div>
                 
                 <label for="inline-prizeQuantity-${prizeId}">Quantity</label>
-                <input type="number" id="inline-prizeQuantity-${prizeId}" value="${prize.quantity}" placeholder="Quantity" min="0">
+                <div class="quantity-control">
+                    <button type="button" class="quantity-btn minus-btn" data-target="inline-prizeQuantity-${prizeId}">−</button>
+                    <input type="number" id="inline-prizeQuantity-${prizeId}" value="${prize.quantity}" placeholder="Quantity" min="0">
+                    <button type="button" class="quantity-btn plus-btn" data-target="inline-prizeQuantity-${prizeId}">+</button>
+                </div>
                 
                 <label for="inline-prizeChance-${prizeId}">Win Chance (%)</label>
                 <input type="number" id="inline-prizeChance-${prizeId}" value="${prize.chance}" placeholder="Win Chance %" min="0" max="100" step="0.1">
@@ -1395,16 +1407,69 @@ class AdminPanel {
             window.slotMachine.populateReels();
         }
     }
+
+    handleQuantityChange(button) {
+        const targetId = button.dataset.target;
+        const input = document.getElementById(targetId);
+        
+        if (!input) return;
+        
+        let currentValue = parseInt(input.value) || 0;
+        const isIncrement = button.classList.contains('plus-btn');
+        
+        if (isIncrement) {
+            currentValue++;
+        } else {
+            // Decrement but don't go below 0
+            currentValue = Math.max(0, currentValue - 1);
+        }
+        
+        input.value = currentValue;
+        
+        // Trigger input event for any validation or change listeners
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 }
 
 // Admin access function
 function showAdminLogin() {
-    const password = prompt('Enter admin password:');
-    if (password === 'admin123') { // Simple password - change as needed
+    const modal = document.getElementById('adminConfirmModal');
+    const yesBtn = document.getElementById('adminConfirmYes');
+    const noBtn = document.getElementById('adminConfirmNo');
+    
+    // Show the modal
+    modal.classList.remove('hidden');
+    
+    // Handle Yes button click
+    function handleYes() {
+        modal.classList.add('hidden');
         adminPanel.show();
-    } else if (password !== null) {
-        alert('Invalid password');
+        cleanup();
     }
+    
+    // Handle No button click
+    function handleNo() {
+        modal.classList.add('hidden');
+        cleanup();
+    }
+    
+    // Clean up event listeners
+    function cleanup() {
+        yesBtn.removeEventListener('click', handleYes);
+        noBtn.removeEventListener('click', handleNo);
+    }
+    
+    // Add event listeners
+    yesBtn.addEventListener('click', handleYes);
+    noBtn.addEventListener('click', handleNo);
+    
+    // Add sound effects if available
+    yesBtn.addEventListener('click', () => {
+        if (window.soundManager) window.soundManager.onButtonClick();
+    });
+    noBtn.addEventListener('click', () => {
+        if (window.soundManager) window.soundManager.onButtonClick();
+    });
 }
 
 // Make showAdminLogin globally available
